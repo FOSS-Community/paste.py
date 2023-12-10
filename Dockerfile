@@ -9,7 +9,7 @@ RUN pip install pdm
 
 # copy files
 COPY pyproject.toml pdm.lock README.md /project/
-COPY data/ project/
+COPY data/ project/data
 COPY src/ /project/src
 
 
