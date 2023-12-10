@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<body>
+<pre style="position: relative;">  ABOUT
+
+      A simple pastebin powered by <a href="https://fastapi.tiangolo.com/">FastAPI</a>.
+
+      Simple API. CLI. Web form.
+
+      Web Form: <a href="https://paste.fosscu.org/web" alt="paste.py web interface">https://paste.fosscu.org/web</a>
+
+  API USAGE
+
+      POST https://paste.fosscu.org/
+
+          Send the raw data along. Will respond with a link to the paste.
+
+          If the response code is 201 (CREATED), then the entire paste was
+          uploaded. If the response is 206 (PARTIAL), then the paste exceeded
+          the server's maximum upload size, and only part of the paste was
+          uploaded. If the response code is anything else, an error has
+          occurred. Pasting is heavily rate limited.
+
+      GET https://paste.fosscu.org/&lt;id&gt/;
+
+          Retrieve the paste with the given id as plain-text.
+
+
+      DELETE https://paste.fosscu.org/&lt;id&gt/;
+
+          Delete the paste with the given id.
+
+  EXAMPLES
+
+      Paste a file named 'file.txt' using cURL:
+
+          curl -X POST -f "file=@file.txt" https://paste.fosscu.org/
+
+      Paste from stdin using cURL:
+
+          echo "Hello, world." | curl -X POST -f "file=@-" https://paste.fosscu.org/
+
+      Delete an existing paste with id &lt;id&gt; using cURL:
+
+          curl -X DELETE https://paste.fosscu.org/&lt;id&gt/;
+
+      A shell function that can be added to `.bashrc` or `.bash_profle` for
+      quick pasting from the command line. The command takes a filename or reads
+      from stdin if none was supplied and outputs the URL of the paste to
+      stdout: `paste file.txt` or `echo "hi" | paste`.
+
+          function paste() {
+              local file=${1:-/dev/stdin}
+              curl -X POST -f "file=@${file}" https://paste.fosscu.org
+          }
+</body>
+</html>
