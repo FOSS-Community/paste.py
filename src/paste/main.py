@@ -84,4 +84,4 @@ def web_post(content: str = Form(...)):
         print(e)
         raise HTTPException(detail="There was an error uploading the file", status_code=status.HTTP_403_FORBIDDEN)
         
-    return RedirectResponse(f"http://localhost:8000/{uuid}/", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(f"http://paste.fosscu.org/{uuid}/", status_code=status.HTTP_303_SEE_OTHER)
