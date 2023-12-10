@@ -8,6 +8,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from .utils import generate_uuid
 
+app = FastAPI(title="paste.py 🐍")
+
 origins = ["*"]
 
 app.add_middleware(
@@ -17,8 +19,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app = FastAPI(title="paste.py 🐍")
 
 large_uuid_storage = []
 
