@@ -34,11 +34,11 @@
 
       Paste a file named 'file.txt' using cURL:
 
-          curl -X POST -f "file=@file.txt" https://paste.fosscu.org/file
+          curl -X POST -F "file=@file.txt" https://paste.fosscu.org/file
 
       Paste from stdin using cURL:
 
-          echo "Hello, world." | curl -X POST -f "file=@-" https://paste.fosscu.org/file
+          echo "Hello, world." | curl -X POST -F "file=@-" https://paste.fosscu.org/file
 
       Delete an existing paste with id &lt;id&gt; using cURL:
 
@@ -51,7 +51,7 @@
 
           function paste() {
               local file=${1:-/dev/stdin}
-              curl -X POST -f "file=@${file}" https://paste.fosscu.org/file
+              curl -X POST -F "file=@${file}" https://paste.fosscu.org/file
           }
 </body>
 </html>
