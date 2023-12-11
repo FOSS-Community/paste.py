@@ -1,59 +1,104 @@
 <!DOCTYPE html>
-<html>
-<body>
-<pre style="position: relative;">  ABOUT
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FastAPI Pastebin</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
 
-      A simple pastebin powered by <a href="https://fastapi.tiangolo.com/">FastAPI</a>.
+      pre {
+        font-family: monospace;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        background-color: #f5f5f5;
+        max-width: 100%;
+        overflow-x: auto;
+      }
 
-      Paste is Fully Free and Open-Source <a href="https://github.com/FOSS-Community/paste.py">Source Code</a>.
+      a {
+        color: #007bff;
+        text-decoration: none;
+      }
 
-      Simple API. CLI. Web form.
+      h3 {
+        margin-bottom: 5px;
+        margin-top: 15px;
+      }
 
-      Web Form: <a href="https://paste.fosscu.org/web" alt="paste.py web interface">https://paste.fosscu.org/web</a>
+      ul {
+        margin-top: 5px;
+      }
 
-  API USAGE
+      @media only screen and (max-width: 768px) {
+        pre {
+          font-size: 16px;
+          padding: 5px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <pre>
+  <h3>ABOUT</h3>
 
-      POST https://paste.fosscu.org/paste
+  <p>A simple pastebin powered by <a href="https://fastapi.tiangolo.com/">FastAPI</a>.</p>
 
-          Send the raw data along. Will respond with a link to the paste.
+  <ul>
+    <li>Simple API</li>
+    <li>CLI</li>
+    <li>Web form</li>
+  </ul>
 
-          If the response code is 201 (CREATED), then the entire paste was
-          uploaded. If the response is 206 (PARTIAL), then the paste exceeded
-          the server's maximum upload size, and only part of the paste was
-          uploaded. If the response code is anything else, an error has
-          occurred. Pasting is heavily rate limited.
+  <strong>Web Form:</strong> <a href="https://paste.fosscu.org/web" alt="paste.py web interface">https://paste.fosscu.org/web</a>
 
-      GET https://paste.fosscu.org/paste/&lt;id&gt;
+  <h3>API USAGE</h3>
 
-          Retrieve the paste with the given id as plain-text.
+  <p><strong>POST:</strong> https://paste.fosscu.org/paste</p>
+  <p>Send the raw data along. Will respond with a link to the paste.</p>
 
+  <ul>
+    <li>201 (CREATED): entire paste uploaded</li>
+    <li>206 (PARTIAL): exceeded server limit</li>
+    <li>Other codes: error</li>
+  </ul>
 
-      DELETE https://paste.fosscu.org/paste/&lt;id&gt;
+  <p>Pasting is heavily rate limited.</p>
 
-          Delete the paste with the given id.
+  <p><strong>GET:</strong> https://paste.fosscu.org/paste/&lt;id&gt;</p>
+  <p>Retrieve the paste with the given id as plain-text.</p>
 
-  EXAMPLES
+  <p><strong>DELETE:</strong> https://paste.fosscu.org/paste/&lt;id&gt;</p>
+  <p>Delete the paste with the given id.</p>
 
-      Paste a file named 'file.txt' using cURL:
+  <h3>EXAMPLES</h3>
 
-          curl -X POST -F "file=@file.txt" https://paste.fosscu.org/file
+  <p><strong>cURL:</strong> Paste a file named 'file.txt'</p>
 
-      Paste from stdin using cURL:
+  <pre>curl -X POST -f "file=@file.txt" https://paste.fosscu.org/file</pre>
 
-          echo "Hello, world." | curl -X POST -F "file=@-" https://paste.fosscu.org/file
+  <p><strong>cURL:</strong> Paste from stdin</p>
 
-      Delete an existing paste with id &lt;id&gt; using cURL:
+  <pre>echo "Hello, world." | curl -X POST -f "file=@-" https://paste.fosscu.org/file</pre>
 
-          curl -X DELETE https://paste.fosscu.org/paste/&lt;id&gt;
+  <p><strong>cURL:</strong> Delete an existing paste</p>
 
-      A shell function that can be added to `.bashrc` or `.bash_profle` for
-      quick pasting from the command line. The command takes a filename or reads
-      from stdin if none was supplied and outputs the URL of the paste to
-      stdout: `paste file.txt` or `echo "hi" | paste`.
+  <pre>curl -X DELETE https://paste.fosscu.org/paste/&lt;id&gt;</pre>
 
-          function paste() {
-              local file=${1:-/dev/stdin}
-              curl -X POST -F "file=@${file}" https://paste.fosscu.org/file
-          }
-</body>
+  <p><strong>Shell function:</strong> paste from the command line</p>
+
+  <pre>function paste() {
+    local file=${1:-/dev/stdin}
+    curl -X POST -f "file=@${file}" https://paste.fosscu.org/file
+  }</pre>
+</pre>
+  </body>
 </html>
