@@ -83,11 +83,11 @@
 
   <p><strong>cURL:</strong> Paste a file named 'file.txt'</p>
 
-  <pre>curl -X POST -f "file=@file.txt" https://paste.fosscu.org/file</pre>
+  <pre>curl -X POST -F "file=@file.txt" https://paste.fosscu.org/file</pre>
 
   <p><strong>cURL:</strong> Paste from stdin</p>
 
-  <pre>echo "Hello, world." | curl -X POST -f "file=@-" https://paste.fosscu.org/file</pre>
+  <pre>echo "Hello, world." | curl -X POST -F "file=@-" https://paste.fosscu.org/file</pre>
 
   <p><strong>cURL:</strong> Delete an existing paste</p>
 
@@ -97,7 +97,7 @@
 
   <pre>function paste() {
     local file=${1:-/dev/stdin}
-    curl -X POST -f "file=@${file}" https://paste.fosscu.org/file
+    curl -X POST -F "file=@${file}" https://paste.fosscu.org/file
   }</pre>
 </pre>
   </body>
