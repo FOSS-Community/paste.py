@@ -17,7 +17,7 @@ This project is designed to be compatible with specific versions of Python for o
 
 ### Supported Python Version
 
-- **Python 3.11.0rc2**
+- **Python 3.11.3**
 
 > ❗️ For the best experience and performance, it is recommended to use the version mentioned above.
 
@@ -27,7 +27,7 @@ Before diving into the project, ensure that you have the correct Python version 
 python --version
 ```
 
-### 🐍 Installing Python 3.11.0rc2 with `pyenv`
+### 🐍 Installing Python 3.11.3 with `pyenv`
 
 **Protip:** Managing multiple Python versions is a breeze with [pyenv](https://github.com/pyenv/pyenv). It allows you to seamlessly switch between different Python versions without the need to reinstall them.
 
@@ -36,12 +36,21 @@ If you haven't installed `pyenv` yet, follow their [official guide](https://gith
 Once you have `pyenv` ready, install the recommended Python version by running:
 
 ```bash
-pyenv install 3.11.0rc2
+pyenv install 3.11.3
 ```
 
 > When you navigate to this project's directory in the future, `pyenv` will automatically select the recommended Python version, thanks to the `.python-version` file in the project root.
 
 # 📦 Setup
+
+## Local setup 🛠️ with Docker 🐳
+
+- **Installing and running**:
+  Before you begin, ensure you have docker installed. If not, refer to the [official documentation](https://docs.docker.com/engine/install/) to install docker.
+  ```bash
+  docker pull mrsunglasses/pastepy
+  docker run -d -p 8080:8080 --name pastepyprod mrsunglasses/pastepy
+  ```
 
 ## Local setup 🛠️ without Docker 🐳
 
@@ -107,7 +116,7 @@ Once you have your server up and running, you can send requests to it from anoth
 Here are a couple of `GET` requests you can make using [curl](https://curl.se/):
 
 ```bash
-curl http://127.0.0.1:8000/health
+curl http://0.0.0.0:8080/health
 ```
 
 > These endpoints typically return the health status or readiness of the server, helping in diagnostics and monitoring.
