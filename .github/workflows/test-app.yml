@@ -1,0 +1,20 @@
+name: Test paste.py 🐍
+
+on:
+  pull_request:
+    branches: []
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@v3
+        with:
+          python-version: 3.11
+      - name: Install dependencies
+        run: pdm install
+      - name: Run tests
+        run: pdm test
