@@ -104,3 +104,8 @@ def web_post(content: str = Form(...)):
                             status_code=status.HTTP_403_FORBIDDEN)
 
     return RedirectResponse(f"http://paste.fosscu.org/paste/{uuid}", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.get("/health", status_code=status.HTTP_200_OK)
+def health() -> dict[str, str]:
+    return {"status": "ok"}
