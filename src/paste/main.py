@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
-from utils import generate_uuid
+from .utils import generate_uuid
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -34,7 +34,7 @@ templates = Jinja2Templates(directory=str(Path(BASE_DIR, 'templates')))
 
 
 @app.post("/file")
-@limiter.limit("5/minute")
+@limiter.limit("150/minute")
 def post_as_a_file(file: UploadFile = File(...)):
     try:
         uuid = generate_uuid()
@@ -92,7 +92,7 @@ def web(request: Request):
 
 
 @app.post("/web", response_class=PlainTextResponse)
-@limiter.limit("5/minute")
+@limiter.limit("500/minute")
 def web_post(content: str = Form(...)):
     try:
         file_content = content.encode()
