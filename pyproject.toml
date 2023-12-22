@@ -24,3 +24,10 @@ test = [
     "pytest>=7.4.3",
     "requests>=2.31.0",
 ]
+lint = [
+    "ruff>=0.1.9",
+    "black>=23.12.1",
+]
+hooks = [
+    "pre-commit>=3.6.0",
+]
