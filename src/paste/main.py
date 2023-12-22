@@ -2,6 +2,7 @@ from fastapi import File, UploadFile, HTTPException, status, Request, Form
 from fastapi.responses import PlainTextResponse, HTMLResponse, RedirectResponse
 import shutil
 import os
+import sys
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
@@ -26,9 +27,16 @@ BASE_DIR = Path(__file__).resolve().parent
 
 templates = Jinja2Templates(directory=str(Path(BASE_DIR, 'templates')))
 
+MAX_UPLOAD_SIZE = 20_000_000 # 20 MB
 
 @app.post("/file")
 def post_as_a_file(file: UploadFile = File(...)):
+    if file.content_type != "text/plain":
+        raise HTTPException(detail="Only text/plain is supported",
+                            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+    if file.filesize > MAX_UPLOAD_SIZE:
+        raise HTTPException(detail="File size is too large",
+                            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
     try:
         uuid = generate_uuid()
         if uuid in large_uuid_storage:
@@ -37,7 +45,6 @@ def post_as_a_file(file: UploadFile = File(...)):
         with open(path, 'wb') as f:
             shutil.copyfileobj(file.file, f)
             large_uuid_storage.append(uuid)
-            print(large_uuid_storage)
     except Exception:
         # return {"message": "There was an error uploading the file"}
         raise HTTPException(detail="There was an error uploading the file",
@@ -51,9 +58,13 @@ def post_as_a_file(file: UploadFile = File(...)):
 @app.get("/paste/{uuid}")
 def post_as_a_text(uuid):
     path = f"data/{uuid}"
+    text = ""
     try:
         with open(path, 'rb') as f:
-            return PlainTextResponse(f.read())
+            text = f.read()
+        if sys.getsizeof(text) > MAX_UPLOAD_SIZE:
+            raise HTTPException(detail="File size is too large",
+                                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
     except Exception as e:
         print(e)
         raise HTTPException(detail="404: The Requested Resource is not found",
