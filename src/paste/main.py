@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
-from utils import generate_uuid
+from .utils import generate_uuid
 
 app = FastAPI(title="paste.py 🐍")
 
