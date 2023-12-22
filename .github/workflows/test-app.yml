@@ -14,6 +14,8 @@ jobs:
         uses: pdm-project/setup-pdm@v3
         with:
           python-version: 3.11
+          cache: true
+          cache-dependency-path: '**/pdm.lock'
       - name: Install dependencies
         run: pdm install
       - name: Run tests
