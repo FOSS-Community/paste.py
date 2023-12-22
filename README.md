@@ -107,7 +107,7 @@ Once you have your server up and running, you can send requests to it from anoth
 Here are a couple of `GET` requests you can make using [curl](https://curl.se/):
 
 ```bash
-curl http://127.0.0.1:8000/api/v1/health
+curl http://127.0.0.1:8000/health
 ```
 
 > These endpoints typically return the health status or readiness of the server, helping in diagnostics and monitoring.
