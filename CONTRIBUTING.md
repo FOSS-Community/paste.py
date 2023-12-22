@@ -1,118 +1,162 @@
-## Contributing Guidelines
+# paste.py
 
-First off, thank you for considering contributing to `paste.py 🐍`. This guide details all the general information that one should know before contributing to the project.
-Please stick as close as possible to the guidelines. That way, we ensure that you have a smooth experience contributing to this project.
+<a href="https://kuma.fosscu.org/status/pastepy" target="_blank"><img src="https://badgen.net/badge/status/paste.py/green?icon=lgtm" alt=""></a>
 
-### General Rules:
+<hr>
 
-These are, in general, rules that you should be following while contributing to an Open-Source project :
+paste.py 🐍 - A pastebin written in python.
 
-- Be Nice, Be Respectful (BNBR)
-- Check if the Issue you created, exists or not.
-- While creating a new issue, make sure you describe the issue clearly.
-- Make proper commit messages and document your PR well.
-- Always add comments in your Code and explain it at points if possible, add Doctest.
-- Always create a Pull Request from a Branch; Never from the Main.
-- Follow proper code conventions because writing clean code is important.
-- Issues would be assigned on a "First Come, First Served" basis.
-- Do mention (@maintainer) the project maintainer if your PR isn't reviewed within a few days.
+# 🤔 Pre-requisites
 
-## First time contributors:
+- `python3`
+- `pdm`
 
-Pushing files in your own repository is easy, but how to contribute to someone else's project? If you have the same question, then below are the steps that you can follow
-to make your first contribution in this repository.
+## 🐍 Python Version Support
 
-### Pull Request
+This project is designed to be compatible with specific versions of Python for optimal performance and stability.
 
-**1.** The very first step includes forking the project. Click on the `fork` button as shown below to fork the project.
-<br><br><img src="https://i.imgur.com/7wapvt2.png" width="750" /><br>
+### Supported Python Version
 
-**2.** Clone the forked repository. Open up the GitBash/Command Line and type
+- **Python 3.11.3**
 
-```
-git clone https://github.com/<YOUR_USER_NAME>/paste.py.git
+> ❗️ For the best experience and performance, it is recommended to use the version mentioned above.
+
+Before diving into the project, ensure that you have the correct Python version installed. To check the version of Python you currently have, execute the following command in your terminal:
+
+```bash
+python --version
 ```
 
-**3.** Navigate to the project directory.
+### 🐍 Installing Python 3.11.3 with `pyenv`
 
-```
-cd paste.py
-```
+**Protip:** Managing multiple Python versions is a breeze with [pyenv](https://github.com/pyenv/pyenv). It allows you to seamlessly switch between different Python versions without the need to reinstall them.
 
-**4.** Add a reference to the original repository.
+If you haven't installed `pyenv` yet, follow their [official guide](https://github.com/pyenv/pyenv) to set it up.
 
-```
-git remote add upstream https://github.com/FOSS-Community/paste.py.git
-```
+Once you have `pyenv` ready, install the recommended Python version by running:
 
-**5.** See latest changes to the repo using
-
-```
-git remote -v
+```bash
+pyenv install 3.11.3
 ```
 
-**6.** Create a new branch.
+> When you navigate to this project's directory in the future, `pyenv` will automatically select the recommended Python version, thanks to the `.python-version` file in the project root.
 
+# 📦 Setup
+
+## Local setup 🛠️ with Docker 🐳
+
+- **Installing and running**:
+  Before you begin, ensure you have docker installed. If not, refer to the [official documentation](https://docs.docker.com/engine/install/) to install docker.
+  ```bash
+  docker pull mrsunglasses/pastepy
+  docker run -d -p 8080:8080 --name pastepyprod mrsunglasses/pastepy
+  ```
+
+## Local setup 🛠️ without Docker 🐳
+
+### Setting Up the Project with PDM
+
+[PDM (Python Development Master)](https://pdm.fming.dev/latest/) is utilized for dependency management in this project. To set up and run the project:
+
+- **Installing PDM**:
+  Before you begin, ensure you have PDM installed. If not, refer to the [official documentation](https://pdm.fming.dev/latest/) to install PDM.
+
+- **Clone the Repository**:
+  Get the project source code from GitHub:
+
+  ```bash
+  git clone https://github.com/FOSS-Community/paste.py.git
+  ```
+
+- **Navigate to the Project Directory**:
+
+  ```bash
+  cd paste.py
+  ```
+
+- **Install Dependencies**:
+  Use PDM to install the project's dependencies:
+  ```bash
+  pdm install
+  ```
+
+* **Start the Project**:
+  Use PDM to run the project:
+  ```bash
+  pdm run start
+  ```
+  - You can also use `pdm run dev` to start the dev server.
+
+## Setting Up and Testing the Project
+
+To ensure the code quality and functionality of the project, follow the steps below:
+
+### Installing Git Hooks with `pre-commit`
+
+Before making any commits, it's essential to ensure that your code meets the quality standards. This project utilizes `pre-commit` hooks to automatically check your changes before any commit.
+
+Install the pre-commit hooks with the following command:
+
+```bash
+pre-commit install
 ```
-git checkout -b <YOUR_BRANCH_NAME>
+
+### Running Tests
+
+To ensure the project's functionality, you should run all the provided tests. Execute the following command to run the tests:
+
+```bash
+pdm run test
 ```
 
-**7.** Always take a pull from the upstream repository to your main branch to keep it even with the main project. This will save you from frequent merge conflicts.
+### Testing the Running Server
 
-```
-git pull upstream main
-```
+Once you have your server up and running, you can send requests to it from another terminal to test its responsiveness and functionality.
 
-**8.** You can make the required changes now. Make appropriate commits with proper commit messages.
+Here are a couple of `GET` requests you can make using [curl](https://curl.se/):
 
-**9.** Add and then commit your changes.
-
-```
-git add .
+```bash
+curl http://0.0.0.0:8080/health
 ```
 
+> These endpoints typically return the health status or readiness of the server, helping in diagnostics and monitoring.
+
+# 🗒️ How to contribute
+
+> ❗️Important: **Please read the [Code of Conduct](CODE_OF_CONDUCT.md) and go through [Contributing Guideline](CONTRIBUTING.md) before contributing to paste.py**
+
+- Feel free to open an issue for any clarifications or suggestions.
+
+<hr>
+
+## Uasge:
+
+### Uisng CLI
+
+> cURL is required to use the CLI.
+
+- Paste a file named 'file.txt'
+
+```bash
+curl -X POST -F "file=@file.txt" https://paste.fosscu.org/file
 ```
-git commit -m "<YOUR_COMMIT_MESSAGE>"
+
+- Paste from stdin
+
+```bash
+echo "Hello, world." | curl -X POST -F "file=@-" https://paste.fosscu.org/file
 ```
 
-**10.** Push your local branch to the remote repository.
+- Delete an existing paste
 
+```bash
+curl -X DELETE https://paste.fosscu.org/paste/<id>
 ```
-git push -u origin <YOUR_BRANCH_NAME>
-```
 
-**11.** Once you have pushed the changes to your repository, go to your forked repository. Click on the `Compare & pull request` button as shown below.
-<br><br><img src="https://hisham.hm/img/posts/github-comparepr.png" width="750" /><br>
+### Using the web interface:
 
-**12.** The image below is what the new page would look like. Give a proper title to your PR and describe the changes made by you in the description box.(Note - Sometimes there are PR templates which are to be filled as instructed.)
-<br><br><img src="https://github.blog/wp-content/uploads/2019/02/draft-pull-requests.png?fit=1354%2C780" width="750" /><br>
+[Go here](https://paste.fosscu.org/web)
 
-**13.** Open a pull request by clicking the `Create pull request` button.
+<hr>
 
-`Voila, you have made your first contribution to this project`
-
-## Issue
-
-- Issues can be used to keep track of bugs, enhancements, or other requests. Creating an issue to let the project maintainers know about the changes you are planning to make before raising a PR is a good open-source practice.
-  <br>
-
-Let's walk through the steps to create an issue:
-
-**1.** On GitHub, navigate to the main page of the repository. [Here](https://github.com/blossomlabsio/Bloom-Backend.git) in this case.
-
-**2.** Under your repository name, click on the `Issues` button.
-<br><br><img src="https://www.stevejgordon.co.uk/wp-content/uploads/2018/01/GitHubIssueTab.png" width="750" /><br>
-
-**3.** Click on the `New issue` button.
-<br><br><img src="https://miro.medium.com/max/3696/1*8jiGiKhMdVQDycWSAbjB8A.png" width="750" /><br>
-
-**4.** Select one of the Issue Templates to get started.
-<br><br><img src="https://i.imgur.com/xz2KAwU.png" width="750" /><br>
-
-**5.** Fill in the appropriate `Title` and `Issue description` and click on `Submit new issue`.
-<br><br><img src="https://i.imgur.com/XwjtGG1.png" width="750" /><br>
-
-### Tutorials that may help you:
-
-- [Git & GitHub Tutorial](https://www.youtube.com/watch?v=RGOj5yH7evk)
-- [Resolve merge conflict](https://docs.github.com/en/free-pro-team@latest/github/collaborating-with-issues-and-pull-requests/resolving-a-merge-conflict-on-github)
+For info API usage and shell functions, see the [website](https://paste.fosscu.org).
