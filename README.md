@@ -52,6 +52,12 @@ pyenv install 3.11.3
   docker run -d -p 8080:8080 --name pastepyprod mrsunglasses/pastepy
   ```
 
+- **Using docker-compose**:
+  You can also use docker-compose to run the project locally by running the following command:
+  ```bash
+  docker-compose up -d
+  ```
+
 ## Local setup 🛠️ without Docker 🐳
 
 ### Setting Up the Project with PDM
