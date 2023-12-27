@@ -52,6 +52,28 @@ pyenv install 3.11.3
   docker run -d -p 8080:8080 --name pastepyprod mrsunglasses/pastepy
   ```
 
+- **Using docker-compose**:
+  You can also use docker-compose to run the project locally by running the following command:
+  <br>
+  - **Clone the repository**:
+  Get the project source code from GitHub:
+  
+  ```bash
+  git clone https://github.com/FOSS-Community/paste.py.git
+  ```
+  
+  - **Navigate to the Project Directory**:
+  
+  ```bash
+  cd paste.py
+  ```
+
+  - **Run the project using docker-compose**:
+  
+  ```bash
+  docker-compose up -d
+  ```
+
 ## Local setup 🛠️ without Docker 🐳
 
 ### Setting Up the Project with PDM
