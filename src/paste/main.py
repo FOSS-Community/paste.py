@@ -49,7 +49,7 @@ async def post_as_a_file(request: Request, file: UploadFile = File(...)):
             uuid = generate_uuid()
         path = f"data/{uuid}"
         with open(path, 'wb') as f:
-            shutil.copyfileobj(file.file, f)
+            await shutil.copyfileobj(file.file, f)
             large_uuid_storage.append(uuid)
     except Exception:
         # return {"message": "There was an error uploading the file"}
@@ -67,7 +67,7 @@ async def post_as_a_text(uuid):
     text = ""
     try:
         with open(path, 'rb') as f:
-            text = f.read()
+            text = await f.read()
         if check_file_size_limit(text):
             raise HTTPException(detail="File size is too large",
                                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
