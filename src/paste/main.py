@@ -12,11 +12,7 @@ from pygments.util import ClassNotFound
 from pathlib import Path
 import os
 import shutil
-
-try:
-    from .utils import generate_uuid
-except ImportError:
-    from utils import generate_uuid
+from utils import generate_uuid
 
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="paste.py 🐍")
