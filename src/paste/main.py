@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
-from .utils import generate_uuid
+from .utils import generate_uuid, check_file_size_limit
 
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="paste.py 🐍")
@@ -33,7 +33,6 @@ BASE_DIR = Path(__file__).resolve().parent
 
 templates = Jinja2Templates(directory=str(Path(BASE_DIR, "templates")))
 
-MAX_UPLOAD_SIZE = 20_000_000 # 20 MB
 
 @app.post("/file")
 @limiter.limit("100/minute")
@@ -41,7 +40,7 @@ async def post_as_a_file(file: UploadFile = File(...)):
     if file.content_type != "text/plain":
         raise HTTPException(detail="Only text/plain is supported",
                             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
-    if file.filesize > MAX_UPLOAD_SIZE:
+    if check_file_size_limit(file.file):
         raise HTTPException(detail="File size is too large",
                             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
     try:
@@ -69,7 +68,7 @@ def post_as_a_text(uuid):
     try:
         with open(path, 'rb') as f:
             text = f.read()
-        if sys.getsizeof(text) > MAX_UPLOAD_SIZE:
+        if check_file_size_limit(text):
             raise HTTPException(detail="File size is too large",
                                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
         else:
