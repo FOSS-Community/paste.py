@@ -9,7 +9,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
-from .utils import generate_uuid
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name, guess_lexer
+from pygments.formatters import HtmlFormatter
+from pygments.util import ClassNotFound
+
+
+try:
+    from .utils import generate_uuid
+except ImportError:
+    from utils import generate_uuid
 
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="paste.py 🐍")
@@ -62,7 +71,16 @@ async def post_as_a_text(uuid):
     path = f"data/{uuid}"
     try:
         with open(path, "rb") as f:
-            return PlainTextResponse(f.read())
+            content = f.read().decode("utf-8")
+            try:
+                lexer = guess_lexer(content)
+                print(lexer)
+            except ClassNotFound:
+                lexer = get_lexer_by_name(
+                    "text", stripall=True)  # default lexer
+            formatter = HtmlFormatter(style="colorful", full=True)
+            highlighted_code = highlight(content, lexer, formatter)
+            return HTMLResponse(content=highlighted_code)
     except Exception as e:
         print(e)
         raise HTTPException(
@@ -117,7 +135,7 @@ async def web_post(request: Request, content: str = Form(...)):
         )
 
     return RedirectResponse(
-        f"http://paste.fosscu.org/paste/{uuid}", status_code=status.HTTP_303_SEE_OTHER
+        f"http://localhost:8080/paste/{uuid}", status_code=status.HTTP_303_SEE_OTHER
     )
 
 
