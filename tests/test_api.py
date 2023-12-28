@@ -3,6 +3,7 @@ from src.paste.main import app
 
 client = TestClient(app)
 
+file = None 
 
 def test_get_health_route():
     data = {"status": "ok"}
@@ -38,12 +39,14 @@ def test_post_web_route():
     data = 'This is a test data'
     form_data = {'content': data}
     response = client.post("/web", data=form_data)
+    global file
+    file = str(response.url).split("/")[-1]
     assert response.status_code == 200
     assert response.text == data
 
 
 def test_delete_paste_route():
-    expected_response = "File successfully deleted test"
-    response = client.delete("/paste/test")
+    expected_response = f"File successfully deleted {file}"
+    response = client.delete(f"/paste/{file}")
     assert response.status_code == 200
     assert response.text == expected_response
