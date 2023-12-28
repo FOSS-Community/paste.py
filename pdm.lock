@@ -5,7 +5,7 @@
 groups = ["default", "test", "lint", "hooks"]
 strategy = ["cross_platform"]
 lock_version = "4.4.1"
-content_hash = "sha256:0c4f05f64ff605af4f759447bb09fee4fe68d0e786ab2b09ce8a32680cdfbbb7"
+content_hash = "sha256:5f062d1449fafa2f6f1dc4d1d0d89c5453c819e95ac94aa028d11ebd2b7b1162"
 
 [[package]]
 name = "annotated-types"
@@ -725,6 +725,16 @@ dependencies = [
 files = [
     {file = "pydantic_settings-2.1.0-py3-none-any.whl", hash = "sha256:7621c0cb5d90d1140d2f0ef557bdf03573aac7035948109adf2574770b77605a"},
     {file = "pydantic_settings-2.1.0.tar.gz", hash = "sha256:26b1492e0a24755626ac5e6d715e9077ab7ad4fb5f19a8b7ed7011d52f36141c"},
+]
+
+[[package]]
+name = "pygments"
+version = "2.17.2"
+requires_python = ">=3.7"
+summary = "Pygments is a syntax highlighting package written in Python."
+files = [
+    {file = "pygments-2.17.2-py3-none-any.whl", hash = "sha256:b27c2826c47d0f3219f29554824c30c5e8945175d888647acd804ddd04af846c"},
+    {file = "pygments-2.17.2.tar.gz", hash = "sha256:da46cec9fd2de5be3a8a784f434e4c4ab670b4ff54d605c4c2717e9d49c4c367"},
 ]
 
 [[package]]
