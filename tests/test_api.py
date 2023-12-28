@@ -11,8 +11,8 @@ client = TestClient(app)
 def post_env(monkeypatch, check_file_size_limit):
     post_file: src.paste.main.post_as_a_file = src.paste.main.post_as_a_file()
     post_text: src.paste.main.post_as_a_text = src.paste.main.post_as_a_text()
-    setattr(src.paste.main.post_as_a_file, "check_file_size_limit", check_file_size_limit)
-    setattr(src.paste.main.post_as_a_text, "check_file_size_limit", check_file_size_limit)
+    monkeypatch.setattr(src.paste.main.post_as_a_file, "check_file_size_limit", check_file_size_limit)
+    monkeypatch.setattr(src.paste.main.post_as_a_text, "check_file_size_limit", check_file_size_limit)
 
     yield post_file, post_text
 
