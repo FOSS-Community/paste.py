@@ -6,9 +6,15 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi.errors import RateLimitExceeded
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
 from .utils import generate_uuid
 
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="paste.py 🐍")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 origins = ["*"]
 
@@ -28,7 +34,8 @@ templates = Jinja2Templates(directory=str(Path(BASE_DIR, "templates")))
 
 
 @app.post("/file")
-async def post_as_a_file(file: UploadFile = File(...)):
+@limiter.limit("100/minute")
+async def post_as_a_file(request: Request, file: UploadFile = File(...)):
     try:
         uuid = generate_uuid()
         if uuid in large_uuid_storage:
@@ -91,7 +98,8 @@ async def web(request: Request):
 
 
 @app.post("/web", response_class=PlainTextResponse)
-async def web_post(content: str = Form(...)):
+@limiter.limit("100/minute")
+async def web_post(request: Request, content: str = Form(...)):
     try:
         file_content = content.encode()
         uuid = generate_uuid()
