@@ -65,6 +65,8 @@ def post_as_a_text(uuid):
         if sys.getsizeof(text) > MAX_UPLOAD_SIZE:
             raise HTTPException(detail="File size is too large",
                                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+        else:
+            return PlainTextResponse(text)
     except Exception as e:
         print(e)
         raise HTTPException(detail="404: The Requested Resource is not found",
