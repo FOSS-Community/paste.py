@@ -36,7 +36,8 @@ templates = Jinja2Templates(directory=str(Path(BASE_DIR, "templates")))
 MAX_UPLOAD_SIZE = 20_000_000 # 20 MB
 
 @app.post("/file")
-def post_as_a_file(file: UploadFile = File(...)):
+@limiter.limit("100/minute")
+async def post_as_a_file(file: UploadFile = File(...)):
     if file.content_type != "text/plain":
         raise HTTPException(detail="Only text/plain is supported",
                             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
