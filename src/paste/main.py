@@ -11,6 +11,10 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from .utils import generate_uuid
 from .middleware import LimitUploadSize
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name, guess_lexer
+from pygments.formatters import HtmlFormatter
+from pygments.util import ClassNotFound
 
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="paste.py 🐍")
@@ -43,7 +47,14 @@ async def post_as_a_file(request: Request, file: UploadFile = File(...)):
         uuid = generate_uuid()
         if uuid in large_uuid_storage:
             uuid = generate_uuid()
-        path = f"data/{uuid}"
+        # Extract file extension from the filename
+        try:
+            file_extension = Path(file.filename).suffix[1:]
+            path = f"data/{uuid}.{file_extension}"
+        except Exception:
+            path = f"data/{uuid}"
+        finally:
+            val = "/".join(path.split("/")[1:])
         with open(path, "wb") as f:
             shutil.copyfileobj(file.file, f)
             large_uuid_storage.append(uuid)
@@ -56,8 +67,7 @@ async def post_as_a_file(request: Request, file: UploadFile = File(...)):
         )
     finally:
         file.file.close()
-
-    return PlainTextResponse(uuid, status_code=status.HTTP_201_CREATED)
+    return PlainTextResponse(val, status_code=status.HTTP_201_CREATED)
 
 
 @app.get("/paste/{uuid}")
@@ -65,7 +75,24 @@ async def get_paste_data(uuid):
     path = f"data/{uuid}"
     try:
         with open(path, "rb") as f:
-            return PlainTextResponse(f.read())
+            content = f.read().decode("utf-8")
+            # Get file extension from the filename
+            file_extension = Path(path).suffix[1:]
+            if file_extension == "":
+                # Guess lexer based on content
+                lexer = guess_lexer(content)
+            else:
+                # Determine lexer based on file extension
+                try:
+                    lexer = get_lexer_by_name(file_extension, stripall=True)
+                except ClassNotFound:
+                    lexer = get_lexer_by_name(
+                        "text", stripall=True)  # Default lexer
+            formatter = HtmlFormatter(style="colorful", full=True)
+            highlighted_code = highlight(content, lexer, formatter)
+            return HTMLResponse(
+                content=highlighted_code
+            )
     except Exception as e:
         print(e)
         raise HTTPException(

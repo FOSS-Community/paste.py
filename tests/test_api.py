@@ -32,7 +32,7 @@ def test_get_paste_data_route():
     data = "This is a test file."
     response = client.get("/paste/test")
     assert response.status_code == 200
-    assert response.text == data
+    assert data in response.text
 
 
 def test_post_web_route():
@@ -42,7 +42,7 @@ def test_post_web_route():
     global file
     file = str(response.url).split("/")[-1]
     assert response.status_code == 200
-    assert response.text == data
+    assert data in response.text
 
 
 def test_delete_paste_route():
@@ -58,10 +58,10 @@ def test_post_file_route():
     response_file_uuid = response.text
     response = client.get(f"/paste/{response_file_uuid}")
     assert response.status_code == 200
-    assert response.text == "test file content"
+    assert "test file content" in response.text
     response = client.delete(f"/paste/{response_file_uuid}")
     assert response.status_code == 200
-    assert response.text == f"File successfully deleted {response_file_uuid}"
+    assert f"File successfully deleted {response_file_uuid}" in response.text
 
 
 def test_post_file_route_failure():
@@ -89,9 +89,12 @@ def test_post_file_route_size_limit():
         while file.tell() < file_size:
             file.write(content)
         file.write(b"Extra bytes to exceed 20 MB\n" * additional_bytes)
-    files = {"file": open(large_file_name, "rb")}
+        file.close()
+    f = open(large_file_name, "rb")
+    files = {"file": f}
     response = client.post("/file", files=files)
+    f.close()
     # cleanup
     os.remove(large_file_name)
     assert response.status_code == 413
-    assert response.text == "File is too large"
+    assert "File is too large" in response.text
