@@ -91,7 +91,8 @@ async def get_paste_data(uuid):
                 except ClassNotFound:
                     lexer = get_lexer_by_name(
                         "text", stripall=True)  # Default lexer
-            formatter = HtmlFormatter(style="colorful", full=True, linenos="inline")
+            formatter = HtmlFormatter(
+                style="colorful", full=True, linenos="inline")
             highlighted_code = highlight(content, lexer, formatter)
             return HTMLResponse(
                 content=highlighted_code
@@ -132,16 +133,20 @@ async def web(request: Request):
 
 @app.post("/web", response_class=PlainTextResponse)
 @limiter.limit("100/minute")
-async def web_post(request: Request, content: str = Form(...), extension: str = Form(...)):
+async def web_post(request: Request, content: str = Form(...), extension: str = Form(None)):
     try:
         file_content = content.encode()
         uuid = generate_uuid()
         if uuid in large_uuid_storage:
             uuid = generate_uuid()
-        path = f"data/{uuid+extension}"
+        if extension:
+            uuid_ = uuid + extension
+        else:
+            uuid_ = uuid
+        path = f"data/{uuid_}"
         with open(path, "wb") as f:
             f.write(file_content)
-            large_uuid_storage.append(uuid+extension)
+            large_uuid_storage.append(uuid_)
     except Exception as e:
         print(e)
         raise HTTPException(
@@ -150,7 +155,7 @@ async def web_post(request: Request, content: str = Form(...), extension: str = 
         )
 
     return RedirectResponse(
-        f"{BASE_URL}/paste/{uuid+extension}", status_code=status.HTTP_303_SEE_OTHER
+        f"{BASE_URL}/paste/{uuid_}", status_code=status.HTTP_303_SEE_OTHER
     )
 
 
