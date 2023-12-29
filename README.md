@@ -71,7 +71,7 @@ pyenv install 3.11.3
   - **Run the project using docker-compose**:
   
   ```bash
-  docker-compose up -d
+  docker-compose up
   ```
 
 ## Local setup 🛠️ without Docker 🐳
