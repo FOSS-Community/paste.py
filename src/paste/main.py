@@ -41,7 +41,8 @@ large_uuid_storage: List[str] = []
 
 BASE_DIR: Path = Path(__file__).resolve().parent
 
-templates: Jinja2Templates = Jinja2Templates(directory=str(Path(BASE_DIR, "templates")))
+templates: Jinja2Templates = Jinja2Templates(
+    directory=str(Path(BASE_DIR, "templates")))
 
 
 @app.post("/file")
@@ -85,7 +86,7 @@ async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) ->
             if not is_browser_request:
                 # Return plain text response
                 return PlainTextResponse(content)
-            
+
             # Get file extension from the filename
             file_extension: str = Path(path).suffix[1:]
             if file_extension == "":
@@ -99,10 +100,62 @@ async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) ->
                     lexer = get_lexer_by_name(
                         "text", stripall=True)  # Default lexer
             formatter = HtmlFormatter(
-                style="colorful", full=True, linenos="inline")
+                style="colorful", full=True, linenos="inline", cssclass='code')
             highlighted_code: str = highlight(content, lexer, formatter)
+
+            print(highlighted_code)
+            custom_style = """
+            .code pre span.linenos {
+                color: #999;
+                padding-right: 10px;
+                -webkit-user-select: none;
+                -webkit-touch-callout: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+            
+            span {
+                font-size: 1.1em !important;
+            }
+
+            pre {
+                line-height: 1.4 !important;
+            }
+
+            .code pre span.linenos::after {
+                content: "";
+                border-right: 1px solid #999;
+                height: 100%;
+                margin-left: 10px;
+            }
+
+            .code {
+                background-color: #fff;
+                border: 1.5px solid #ddd;
+                border-radius: 5px;
+                margin-bottom: 20px;
+                overflow: auto;
+            }
+
+            pre {
+                font-family: 'Consolas','Monaco','Andale Mono','Ubuntu Mono','monospace;' !important;
+            }
+            """
+            response_content: str = f"""
+                <html>
+                    <head>
+                        <title>{uuid}</title>
+                        <style>{custom_style}</style>
+                        <style>{formatter.get_style_defs('.highlight')}</style>
+                    </head>
+                    <body>
+                        {highlighted_code}
+                    </body>
+                </html>
+                """
             return HTMLResponse(
-                content=highlighted_code
+                content=response_content
             )
     except Exception as e:
         print(e)
