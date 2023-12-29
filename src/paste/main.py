@@ -24,6 +24,8 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 origins = ["*"]
 
+BASE_URL = r"http://paste.fosscu.org"
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -89,7 +91,7 @@ async def get_paste_data(uuid):
                 except ClassNotFound:
                     lexer = get_lexer_by_name(
                         "text", stripall=True)  # Default lexer
-            formatter = HtmlFormatter(style="colorful", full=True)
+            formatter = HtmlFormatter(style="colorful", full=True, linenos="inline")
             highlighted_code = highlight(content, lexer, formatter)
             return HTMLResponse(
                 content=highlighted_code
@@ -148,7 +150,7 @@ async def web_post(request: Request, content: str = Form(...), extension: str = 
         )
 
     return RedirectResponse(
-        f"http://localhost:8080/paste/{uuid+extension}", status_code=status.HTTP_303_SEE_OTHER
+        f"{BASE_URL}/paste/{uuid+extension}", status_code=status.HTTP_303_SEE_OTHER
     )
 
 
