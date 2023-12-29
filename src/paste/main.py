@@ -164,7 +164,7 @@ async def get_languages():
     try:
         with open(Path(BASE_DIR, "languages.json"), "r") as file:
             languages_data = json.load(file)
-            print(languages_data)
+            # print(languages_data)
         return JSONResponse(content=languages_data, status_code=status.HTTP_200_OK)
     except FileNotFoundError:
         raise HTTPException(
