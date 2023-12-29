@@ -1,4 +1,4 @@
-from fastapi import File, UploadFile, HTTPException, status, Request, Form, FastAPI
+from fastapi import File, UploadFile, HTTPException, status, Request, Form, FastAPI, Header
 from fastapi.responses import PlainTextResponse, HTMLResponse, RedirectResponse, JSONResponse
 import shutil
 import os
@@ -16,7 +16,7 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.formatters import HtmlFormatter
 from pygments.util import ClassNotFound
-from typing import List, Optional
+from typing import List, Optional, Any
 
 limiter = Limiter(key_func=get_remote_address)
 app: FastAPI = FastAPI(title="paste.py 🐍")
@@ -74,11 +74,18 @@ async def post_as_a_file(request: Request, file: UploadFile = File(...)) -> Plai
 
 
 @app.get("/paste/{uuid}")
-async def get_paste_data(uuid: str) -> HTMLResponse:
+async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) -> Any:
     path: str = f"data/{uuid}"
     try:
         with open(path, "rb") as f:
             content: str = f.read().decode("utf-8")
+            # Check if the request is from a browser
+            is_browser_request = "Mozilla" in user_agent if user_agent else False
+
+            if not is_browser_request:
+                # Return plain text response
+                return PlainTextResponse(content)
+            
             # Get file extension from the filename
             file_extension: str = Path(path).suffix[1:]
             if file_extension == "":
