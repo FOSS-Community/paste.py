@@ -8,7 +8,7 @@ from starlette.types import ASGIApp
 class LimitUploadSize(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp, max_upload_size: int) -> None:
         super().__init__(app)
-        self.max_upload_size = max_upload_size
+        self.max_upload_size: int = max_upload_size
 
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
@@ -16,7 +16,7 @@ class LimitUploadSize(BaseHTTPMiddleware):
         if request.method == "POST":
             if "content-length" not in request.headers:
                 return Response(status_code=status.HTTP_411_LENGTH_REQUIRED)
-            content_length = int(request.headers["content-length"])
+            content_length: int = int(request.headers["content-length"])
             if content_length > self.max_upload_size:
                 return Response(
                     "File is too large",

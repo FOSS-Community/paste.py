@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-      <title>paste.py 🐍</title>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <meta name="og:title" content="paste.py 🐍"/>
-      <meta name="og:site_name" content="paste.py"/>
-      <meta name="og:description" content="Web form for posting to paste.py. A simple pastebin powered by FastAPI."/>
-      <meta name="og:type" content="website"/>
-      <meta name="og:url" content="https://paste.fosscu.org/web"/>
-      <meta name="og:locale" content="en_US"/>
+    <title>paste.py 🐍</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="og:title" content="paste.py 🐍" />
+    <meta name="og:site_name" content="paste.py" />
+    <meta
+      name="og:description"
+      content="Web form for posting to paste.py. A simple pastebin powered by FastAPI."
+    />
+    <meta name="og:type" content="website" />
+    <meta name="og:url" content="https://paste.fosscu.org/web" />
+    <meta name="og:locale" content="en_US" />
     <style>
       body {
         font-family: sans-serif;
@@ -44,6 +47,13 @@
         border-radius: 3px;
         cursor: pointer;
       }
+      select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        margin-top: 10px;
+      }
 
       @media only screen and (max-width: 768px) {
         .container {
@@ -55,6 +65,13 @@
   <body>
     <div class="container">
       <form method="post" action="/web">
+        <select name="language" id="language">
+          <!-- Options will be dynamically added here -->
+        </select>
+        <select name="extension" id="extension" style="display: none">
+          <!-- Options will be dynamically added here -->
+        </select>
+        <br />
         <textarea
           name="content"
           required
@@ -68,5 +85,89 @@
         <input type="submit" value="Paste!" />
       </form>
     </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var languageSelect = document.getElementById("language");
+        var extensionSelect = document.getElementById("extension");
+
+        languageSelect.addEventListener("change", function () {
+          var selectedLanguage = languageSelect.value;
+          var selectedLanguageData = findLanguageData(selectedLanguage);
+
+          // Clear the extension dropdown before updating
+          clearDropdown(extensionSelect);
+
+          if (selectedLanguageData && selectedLanguageData.extensions) {
+            if (selectedLanguageData.extensions.length > 1) {
+              // Show the extension dropdown
+              extensionSelect.style.display = "block";
+              extensionSelect.style.opacity = 1;
+              extensionSelect.style.cursor = "auto";
+
+              // Populate the extension dropdown with options for each extension
+              selectedLanguageData.extensions.forEach(function (ext) {
+                var extOption = document.createElement("option");
+                extOption.value = ext;
+                extOption.text = ext;
+                extensionSelect.add(extOption);
+              });
+            } else {
+              // Hide the extension dropdown if the language has only one extension
+              var ext = selectedLanguageData.extensions[0];
+              var extOption = document.createElement("option");
+              extOption.value = ext;
+              extOption.text = ext;
+              extensionSelect.add(extOption);
+              extensionSelect.style.display = "block";
+              extensionSelect.style.opacity = 0.5;
+              extensionSelect.style.cursor = "no-drop";
+            }
+          } else {
+            // Hide the extension dropdown if no extensions are available for the selected language
+            extensionSelect.style.display = "none";
+          }
+        });
+
+        async function fetchLanguages() {
+          try {
+            const response = await fetch("/languages.json");
+            window.programmingLanguages = await response.json();
+
+            populateLanguageDropdown(window.programmingLanguages);
+          } catch (error) {
+            console.error("Error fetching languages:", error);
+          }
+        }
+
+        function populateLanguageDropdown(languages) {
+          languages.forEach(function (language) {
+            var option = document.createElement("option");
+            option.value = language.name;
+            option.text = language.name;
+            languageSelect.add(option);
+          });
+
+          // Trigger the change event to initialize the dropdown state
+          var event = new Event("change");
+          languageSelect.dispatchEvent(event);
+        }
+
+        function clearDropdown(dropdown) {
+          // Clear all options from the dropdown
+          while (dropdown.options.length > 0) {
+            dropdown.remove(0);
+          }
+        }
+
+        function findLanguageData(languageName) {
+          // Find the data for the selected language
+          return window.programmingLanguages.find(
+            (language) => language.name === languageName
+          );
+        }
+
+        fetchLanguages();
+      });
+    </script>
   </body>
 </html>
