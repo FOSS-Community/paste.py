@@ -1,7 +1,8 @@
 from fastapi import File, UploadFile, HTTPException, status, Request, Form
-from fastapi.responses import PlainTextResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import PlainTextResponse, HTMLResponse, RedirectResponse, JSONResponse
 import shutil
 import os
+import json
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
@@ -129,16 +130,16 @@ async def web(request: Request):
 
 @app.post("/web", response_class=PlainTextResponse)
 @limiter.limit("100/minute")
-async def web_post(request: Request, content: str = Form(...)):
+async def web_post(request: Request, content: str = Form(...), extension: str = Form(...)):
     try:
         file_content = content.encode()
         uuid = generate_uuid()
         if uuid in large_uuid_storage:
             uuid = generate_uuid()
-        path = f"data/{uuid}"
+        path = f"data/{uuid+extension}"
         with open(path, "wb") as f:
             f.write(file_content)
-            large_uuid_storage.append(uuid)
+            large_uuid_storage.append(uuid+extension)
     except Exception as e:
         print(e)
         raise HTTPException(
@@ -147,10 +148,29 @@ async def web_post(request: Request, content: str = Form(...)):
         )
 
     return RedirectResponse(
-        f"http://paste.fosscu.org/paste/{uuid}", status_code=status.HTTP_303_SEE_OTHER
+        f"http://localhost:8080/paste/{uuid+extension}", status_code=status.HTTP_303_SEE_OTHER
     )
 
 
 @app.get("/health", status_code=status.HTTP_200_OK)
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/languages.json", response_class=JSONResponse)
+async def get_languages():
+    try:
+        with open(Path(BASE_DIR, "languages.json"), "r") as file:
+            languages_data = json.load(file)
+            print(languages_data)
+        return JSONResponse(content=languages_data, status_code=status.HTTP_200_OK)
+    except FileNotFoundError:
+        raise HTTPException(
+            detail="Languages file not found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        raise HTTPException(
+            detail=f"Error reading languages file: {e}",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

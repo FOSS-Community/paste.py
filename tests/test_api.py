@@ -37,7 +37,7 @@ def test_get_paste_data_route():
 
 def test_post_web_route():
     data = "This is a test data"
-    form_data = {"content": data}
+    form_data = {"content": data, "extension": ".txt"}
     response = client.post("/web", data=form_data)
     global file
     file = str(response.url).split("/")[-1]

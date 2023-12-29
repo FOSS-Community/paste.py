@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-      <title>paste.py 🐍</title>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <meta name="og:title" content="paste.py 🐍"/>
-      <meta name="og:site_name" content="paste.py"/>
-      <meta name="og:description" content="Web form for posting to paste.py. A simple pastebin powered by FastAPI."/>
-      <meta name="og:type" content="website"/>
-      <meta name="og:url" content="https://paste.fosscu.org/web"/>
-      <meta name="og:locale" content="en_US"/>
+    <title>paste.py 🐍</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="og:title" content="paste.py 🐍" />
+    <meta name="og:site_name" content="paste.py" />
+    <meta
+      name="og:description"
+      content="Web form for posting to paste.py. A simple pastebin powered by FastAPI."
+    />
+    <meta name="og:type" content="website" />
+    <meta name="og:url" content="https://paste.fosscu.org/web" />
+    <meta name="og:locale" content="en_US" />
     <style>
       body {
         font-family: sans-serif;
@@ -44,6 +47,13 @@
         border-radius: 3px;
         cursor: pointer;
       }
+      select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        margin-top: 10px;
+      }
 
       @media only screen and (max-width: 768px) {
         .container {
@@ -55,6 +65,10 @@
   <body>
     <div class="container">
       <form method="post" action="/web">
+        <select name="extension" id="language">
+          <!-- Options will be dynamically added here -->
+        </select>
+        <br />
         <textarea
           name="content"
           required
@@ -68,5 +82,36 @@
         <input type="submit" value="Paste!" />
       </form>
     </div>
+    <script>
+      async function fetchLanguages() {
+        try {
+          const response = await fetch("/languages.json");
+          const programmingLanguages = await response.json();
+
+          populateLanguageDropdown(programmingLanguages);
+        } catch (error) {
+          console.error("Error fetching languages:", error);
+        }
+      }
+
+      function populateLanguageDropdown(languages) {
+        var languageSelect = document.getElementById("language");
+        // Populate the language dropdown
+        languages.forEach(function (language) {
+          var option = document.createElement("option");
+          try {
+            option.value = language["extensions"][0];
+          } catch (error) {
+            console.warn("No extensions found for language:", language.name);
+            console.warn("Error parsing language:", error);
+            option.value = ".txt";
+          }
+          option.text = language.name;
+          languageSelect.add(option);
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", fetchLanguages);
+    </script>
   </body>
 </html>
