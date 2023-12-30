@@ -1,10 +1,24 @@
-from fastapi import File, UploadFile, HTTPException, status, Request, Form, FastAPI, Header
-from fastapi.responses import PlainTextResponse, HTMLResponse, RedirectResponse, JSONResponse
+from fastapi import (
+    File,
+    UploadFile,
+    HTTPException,
+    status,
+    Request,
+    Form,
+    FastAPI,
+    Header,
+    Response,
+)
+from fastapi.responses import (
+    PlainTextResponse,
+    HTMLResponse,
+    RedirectResponse,
+    JSONResponse,
+)
 import shutil
 import os
 import json
 from pathlib import Path
-from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
@@ -16,7 +30,7 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.formatters import HtmlFormatter
 from pygments.util import ClassNotFound
-from typing import List, Optional, Any
+from typing import List, Optional
 
 limiter = Limiter(key_func=get_remote_address)
 app: FastAPI = FastAPI(title="paste.py 🐍")
@@ -41,21 +55,24 @@ large_uuid_storage: List[str] = []
 
 BASE_DIR: Path = Path(__file__).resolve().parent
 
-templates: Jinja2Templates = Jinja2Templates(
-    directory=str(Path(BASE_DIR, "templates")))
+templates: Jinja2Templates = Jinja2Templates(directory=str(Path(BASE_DIR, "templates")))
 
 
 @app.post("/file")
 @limiter.limit("100/minute")
-async def post_as_a_file(request: Request, file: UploadFile = File(...)) -> PlainTextResponse:
+async def post_as_a_file(
+    request: Request, file: UploadFile = File(...)
+) -> PlainTextResponse:
     try:
         uuid: str = generate_uuid()
         if uuid in large_uuid_storage:
             uuid = generate_uuid()
         # Extract file extension from the filename
         try:
-            file_extension: str = Path(file.filename).suffix[1:]
-            path: str = f"data/{uuid}.{file_extension}"
+            file_extension: Optional[str] = None
+            if file.filename is not None:
+                file_extension = Path(file.filename).suffix[1:]
+            path: str = f"data/{uuid}{file_extension}"
         except Exception:
             path = f"data/{uuid}"
         finally:
@@ -63,7 +80,6 @@ async def post_as_a_file(request: Request, file: UploadFile = File(...)) -> Plai
         with open(path, "wb") as f:
             shutil.copyfileobj(file.file, f)
             large_uuid_storage.append(uuid)
-            print(large_uuid_storage)
     except Exception:
         raise HTTPException(
             detail="There was an error uploading the file",
@@ -75,7 +91,9 @@ async def post_as_a_file(request: Request, file: UploadFile = File(...)) -> Plai
 
 
 @app.get("/paste/{uuid}")
-async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) -> Any:
+async def get_paste_data(
+    uuid: str, user_agent: Optional[str] = Header(None)
+) -> Response:
     path: str = f"data/{uuid}"
     try:
         with open(path, "rb") as f:
@@ -97,13 +115,11 @@ async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) ->
                 try:
                     lexer = get_lexer_by_name(file_extension, stripall=True)
                 except ClassNotFound:
-                    lexer = get_lexer_by_name(
-                        "text", stripall=True)  # Default lexer
+                    lexer = get_lexer_by_name("text", stripall=True)  # Default lexer
             formatter = HtmlFormatter(
-                style="colorful", full=True, linenos="inline", cssclass='code')
+                style="colorful", full=True, linenos="inline", cssclass="code"
+            )
             highlighted_code: str = highlight(content, lexer, formatter)
-
-            print(highlighted_code)
             custom_style = """
             .code pre span.linenos {
                 color: #999;
@@ -154,11 +170,8 @@ async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) ->
                     </body>
                 </html>
                 """
-            return HTMLResponse(
-                content=response_content
-            )
-    except Exception as e:
-        print(e)
+            return HTMLResponse(content=response_content)
+    except Exception:
         raise HTTPException(
             detail="404: The Requested Resource is not found",
             status_code=status.HTTP_404_NOT_FOUND,
@@ -166,7 +179,7 @@ async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) ->
 
 
 @app.get("/", response_class=HTMLResponse)
-async def indexpage(request: Request) -> HTMLResponse:
+async def indexpage(request: Request) -> Response:
     return templates.TemplateResponse("index.html", {"request": request})
 
 
@@ -187,7 +200,7 @@ async def delete_paste(uuid: str) -> PlainTextResponse:
 
 
 @app.get("/web", response_class=HTMLResponse)
-async def web(request: Request) -> HTMLResponse:
+async def web(request: Request) -> Response:
     return templates.TemplateResponse("web.html", {"request": request})
 
 
@@ -209,8 +222,7 @@ async def web_post(
         with open(path, "wb") as f:
             f.write(file_content)
             large_uuid_storage.append(uuid_)
-    except Exception as e:
-        print(e)
+    except Exception:
         raise HTTPException(
             detail="There was an error uploading the file",
             status_code=status.HTTP_403_FORBIDDEN,
