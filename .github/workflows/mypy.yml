@@ -1,4 +1,4 @@
-name: Test paste.py 🐍
+name: mypy paste.py 🐍
 
 on:
   pull_request:
