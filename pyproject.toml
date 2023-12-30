@@ -34,6 +34,9 @@ lint = [
 hooks = [
     "pre-commit>=3.6.0",
 ]
+typing = [
+    "mypy>=1.8.0",
+]
 
 [tool.ruff]
 line-length = 160
