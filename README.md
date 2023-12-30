@@ -3,7 +3,7 @@
 <a href="https://kuma.fosscu.org/status/pastepy" target="_blank"><img src="https://badgen.net/badge/status/paste.py/green?icon=lgtm" alt=""></a>
 
 <hr>
-
+TEST
 paste.py 🐍 - A pastebin written in python.
 
 # 🤔 Pre-requisites
