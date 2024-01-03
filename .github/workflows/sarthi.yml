@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up Sarthi
-        uses: tushar5526/sarthi-deploy@tushar5526-patch-1
+        uses: tushar5526/sarthi-deploy@main
         with:
           compose_file: docker-compose.yaml # override this with the compose file name
           sarthi_server_url: ${{ secrets.SARTHI_SERVER_URL }}
