@@ -102,8 +102,7 @@ async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) ->
             formatter = HtmlFormatter(
                 style="colorful", full=True, linenos="inline", cssclass='code')
             highlighted_code: str = highlight(content, lexer, formatter)
-
-            print(highlighted_code)
+            # print(highlighted_code)
             custom_style = """
             .code pre span.linenos {
                 color: #999;
@@ -141,17 +140,58 @@ async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) ->
             pre {
                 font-family: 'Consolas','Monaco','Andale Mono','Ubuntu Mono','monospace;' !important;
             }
+            .copy-button {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: #fff;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            outline: none;
+            }
+            """
+            custom_script = """
+            function copyAllText() {
+            // Create a range object to select the entire document
+            const range = document.createRange();
+            range.selectNode(document.body);
+
+            // Create a selection object and add the range to it
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+
+            // Copy the selected text to the clipboard
+            document.execCommand('copy');
+
+            // Clear the selection to avoid interfering with the user's selection
+            selection.removeAllRanges();
+
+            // You can customize the copied message
+            alert('All text copied to clipboard!');
+        }
+
             """
             response_content: str = f"""
                 <html>
                     <head>
-                        <title>{uuid}</title>
+                        <title>{uuid} | Paste.py</title>
+                        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
                         <style>{custom_style}</style>
                         <style>{formatter.get_style_defs('.highlight')}</style>
                     </head>
                     <body>
+                    <div id="copyButton" class="copy-button" onclick="copyAllText()">
+                        <i class="fas fa-copy"></i>
+                    </div>
                         {highlighted_code}
                     </body>
+                    <script>
+                        {custom_script}
+                    </script>
                 </html>
                 """
             return HTMLResponse(
