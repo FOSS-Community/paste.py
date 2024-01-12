@@ -1,10 +1,11 @@
 from fastapi.testclient import TestClient
 from src.paste.main import app
+from typing import Optional
 import os
 
 client: TestClient = TestClient(app)
 
-file: str = None
+file: Optional[str] = None
 
 
 def test_get_health_route() -> None:

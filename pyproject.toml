@@ -19,7 +19,9 @@ license = {text = "MIT"}
 
 [tool.pdm.scripts]
 start = "uvicorn src.paste.main:app --host 0.0.0.0 --port 8080 --workers 4"
+dev = "uvicorn src.paste.main:app --host 0.0.0.0 --port 8080 --reload"
 test = "pytest"
+mypy = "mypy src/paste"
 
 [tool.pdm.dev-dependencies]
 test = [
@@ -33,3 +35,10 @@ lint = [
 hooks = [
     "pre-commit>=3.6.0",
 ]
+typing = [
+    "mypy>=1.8.0",
+]
+
+[tool.ruff]
+line-length = 160
+exclude = ["data/*", ".git"]
