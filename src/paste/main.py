@@ -70,7 +70,8 @@ large_uuid_storage: List[str] = []
 
 BASE_DIR: Path = Path(__file__).resolve().parent
 
-templates: Jinja2Templates = Jinja2Templates(directory=str(Path(BASE_DIR, "templates")))
+templates: Jinja2Templates = Jinja2Templates(
+    directory=str(Path(BASE_DIR, "templates")))
 
 
 @app.post("/file")
@@ -126,8 +127,10 @@ async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) ->
                 try:
                     lexer = get_lexer_by_name(file_extension, stripall=True)
                 except ClassNotFound:
-                    lexer = get_lexer_by_name("text", stripall=True)  # Default lexer
-            formatter = HtmlFormatter(style="colorful", full=True, linenos="inline", cssclass="code")
+                    lexer = get_lexer_by_name(
+                        "text", stripall=True)  # Default lexer
+            formatter = HtmlFormatter(
+                style="colorful", full=True, linenos="inline", cssclass="code")
             highlighted_code: str = highlight(content, lexer, formatter)
             # print(highlighted_code)
             custom_style = """
@@ -241,9 +244,11 @@ async def delete_paste(uuid: str) -> PlainTextResponse:
         os.remove(path)
         return PlainTextResponse(f"File successfully deleted {uuid}")
     except FileNotFoundError:
-        raise HTTPException(detail="File Not Found", status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(detail="File Not Found",
+                            status_code=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        raise HTTPException(detail=f"The exception is {e}", status_code=status.HTTP_409_CONFLICT)
+        raise HTTPException(
+            detail=f"The exception is {e}", status_code=status.HTTP_409_CONFLICT)
 
 
 @app.get("/web", response_class=HTMLResponse)
