@@ -208,7 +208,7 @@ async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) ->
             response_content: str = f"""
                 <html>
                     <head>
-                        <title>{uuid} | Paste.py</title>
+                        <title>{uuid} | paste.py 🐍</title>
                         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
                         <style>{custom_style}</style>
                         <style>{formatter.get_style_defs('.highlight')}</style>
