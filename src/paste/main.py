@@ -70,7 +70,8 @@ large_uuid_storage: List[str] = []
 
 BASE_DIR: Path = Path(__file__).resolve().parent
 
-templates: Jinja2Templates = Jinja2Templates(directory=str(Path(BASE_DIR, "templates")))
+templates: Jinja2Templates = Jinja2Templates(
+    directory=str(Path(BASE_DIR, "templates")))
 
 
 @app.post("/file")
@@ -126,9 +127,12 @@ async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) ->
                 try:
                     lexer = get_lexer_by_name(file_extension, stripall=True)
                 except ClassNotFound:
-                    lexer = get_lexer_by_name("text", stripall=True)  # Default lexer
-            formatter = HtmlFormatter(style="colorful", full=True, linenos="inline", cssclass="code")
+                    lexer = get_lexer_by_name(
+                        "text", stripall=True)  # Default lexer
+            formatter = HtmlFormatter(
+                style="colorful", full=True, linenos="inline", cssclass="code")
             highlighted_code: str = highlight(content, lexer, formatter)
+            # print(highlighted_code)
             custom_style = """
             .code pre span.linenos {
                 color: #999;
@@ -166,17 +170,58 @@ async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) ->
             pre {
                 font-family: 'Consolas','Monaco','Andale Mono','Ubuntu Mono','monospace;' !important;
             }
+            .copy-button {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: #fff;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            outline: none;
+            }
+            """
+            custom_script = """
+            function copyAllText() {
+            // Create a range object to select the entire document
+            const range = document.createRange();
+            range.selectNode(document.body);
+
+            // Create a selection object and add the range to it
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+
+            // Copy the selected text to the clipboard
+            document.execCommand('copy');
+
+            // Clear the selection to avoid interfering with the user's selection
+            selection.removeAllRanges();
+
+            // You can customize the copied message
+            alert('All text copied to clipboard!');
+        }
+
             """
             response_content: str = f"""
                 <html>
                     <head>
-                        <title>{uuid}</title>
+                        <title>{uuid} | paste.py 🐍</title>
+                        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
                         <style>{custom_style}</style>
                         <style>{formatter.get_style_defs('.highlight')}</style>
                     </head>
                     <body>
+                    <div id="copyButton" class="copy-button" onclick="copyAllText()">
+                        <i class="fas fa-copy"></i>
+                    </div>
                         {highlighted_code}
                     </body>
+                    <script>
+                        {custom_script}
+                    </script>
                 </html>
                 """
             return HTMLResponse(content=response_content)
@@ -199,9 +244,11 @@ async def delete_paste(uuid: str) -> PlainTextResponse:
         os.remove(path)
         return PlainTextResponse(f"File successfully deleted {uuid}")
     except FileNotFoundError:
-        raise HTTPException(detail="File Not Found", status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(detail="File Not Found",
+                            status_code=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        raise HTTPException(detail=f"The exception is {e}", status_code=status.HTTP_409_CONFLICT)
+        raise HTTPException(
+            detail=f"The exception is {e}", status_code=status.HTTP_409_CONFLICT)
 
 
 @app.get("/web", response_class=HTMLResponse)
