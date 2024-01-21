@@ -283,7 +283,7 @@ async def web_post(request: Request, content: str = Form(...), extension: Option
 
 @app.get("/health", status_code=status.HTTP_200_OK)
 async def health() -> dict[str, str]:
-    return {"status": "ok"}
+    return {{"status": "ok"}}
 
 
 @app.get("/languages.json", response_class=JSONResponse)

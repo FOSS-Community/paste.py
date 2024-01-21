@@ -3,7 +3,7 @@ name = ""
 version = ""
 description = ""
 authors = [
-    {name = "Kanishk Pachauri", email = "itskanishkp.py@gmail.com"},
+    {name = "Kanishk Pachaur", email = "itskanishkp.py@gmail.com"},
 ]
 dependencies = [
     "fastapi[all]>=0.104.1",
