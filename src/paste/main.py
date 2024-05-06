@@ -24,7 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
-from .utils import generate_uuid
+from .utils import generate_uuid, _find_without_extension
 from .middleware import LimitUploadSize
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name, guess_lexer
@@ -55,7 +55,6 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 origins: List[str] = ["*"]
 
 BASE_URL: str = r"http://paste.fosscu.org"
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -106,6 +105,8 @@ async def post_as_a_file(request: Request, file: UploadFile = File(...)) -> Plai
 
 @app.get("/paste/{uuid}")
 async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) -> Response:
+    if not "." in uuid:
+        uuid = _find_without_extension(uuid)
     path: str = f"data/{uuid}"
     try:
         with open(path, "rb") as f:
