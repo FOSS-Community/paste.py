@@ -303,3 +303,65 @@ async def get_languages() -> JSONResponse:
             detail=f"Error reading languages file: {e}",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+# apis to create and get a paste which returns uuid and url (to be used by SDK)
+@app.post("/api/paste", response_model=PasteResponse)
+@limiter.limit("100/minute")
+async def create_paste(paste: PasteCreate) -> JSONResponse:
+    try:
+        uuid: str = generate_uuid()
+        if uuid in large_uuid_storage:
+            uuid = generate_uuid()
+        
+        uuid_with_extension: str = f"{uuid}.{paste.extension}"
+        path: str = f"data/{uuid_with_extension}"
+        
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(paste.content)
+        
+        large_uuid_storage.append(uuid_with_extension)
+        
+        return JSONResponse(
+            content=PasteResponse(
+                uuid=uuid_with_extension,
+                url=f"{BASE_URL}/paste/{uuid_with_extension}"
+            ).dict(),
+            status_code=status.HTTP_201_CREATED
+        )
+    except Exception as e:
+        raise HTTPException(
+            detail=f"There was an error creating the paste: {str(e)}",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+@app.get("/api/paste/{uuid}", response_model=PasteDetails)
+async def get_paste_details(uuid: str) -> JSONResponse:
+    if not "." in uuid:
+        uuid = _find_without_extension(uuid)
+    path: str = f"data/{uuid}"
+    
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            content: str = f.read()
+        
+        extension: str = Path(path).suffix[1:]
+        
+        return JSONResponse(
+            content=PasteDetails(
+                uuid=uuid,
+                content=content,
+                extension=extension
+            ).dict(),
+            status_code=status.HTTP_200_OK
+        )
+    except FileNotFoundError:
+        raise HTTPException(
+            detail="Paste not found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        raise HTTPException(
+            detail=f"Error retrieving paste: {str(e)}",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
