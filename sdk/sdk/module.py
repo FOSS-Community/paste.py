@@ -37,3 +37,14 @@ class PasteBinSDK:
         response = requests.get(f"{self.base_url}/paste/{uuid}")
         response.raise_for_status()
         return response.text
+
+    def delete_paste(self, uuid: str) -> str:
+        """
+        Delete a paste by its unique identifier.
+        
+        :param uuid: The unique identifier of the paste
+        :return: A confirmation message
+        """
+        response = requests.delete(f"{self.base_url}/paste/{uuid}")
+        response.raise_for_status()
+        return response.text
