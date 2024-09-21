@@ -17,7 +17,7 @@ from fastapi.responses import (
 )
 from starlette.requests import Request
 from starlette.responses import Response
-from typing import Callable, Awaitable, List, Optional
+from typing import Callable, Awaitable, List, Optional, Union, Any
 import shutil
 import os
 import json
@@ -54,8 +54,8 @@ app: FastAPI = FastAPI(
 )
 app.state.limiter = limiter
 
-async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> Response:
-    return await _rate_limit_exceeded_handler(request, exc)
+async def rate_limit_exceeded_handler(request: Request, exc: Exception) -> Union[Response, Awaitable[Response]]:
+    return _rate_limit_exceeded_handler(request, exc)
 
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
