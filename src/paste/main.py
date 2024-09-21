@@ -15,6 +15,9 @@ from fastapi.responses import (
     RedirectResponse,
     JSONResponse,
 )
+from starlette.requests import Request
+from starlette.responses import Response
+from typing import Callable, Awaitable, List, Optional, Union, Any
 import shutil
 import os
 import json
@@ -30,8 +33,8 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.formatters import HtmlFormatter
 from pygments.util import ClassNotFound
-from typing import List, Optional
 from . import __version__, __author__, __contact__, __url__
+from .schema import PasteCreate, PasteResponse, PasteDetails
 
 description: str = "paste.py 🐍 - A pastebin written in python."
 
@@ -50,7 +53,20 @@ app: FastAPI = FastAPI(
     redoc_url=None,
 )
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+def rate_limit_exceeded_handler(request: Request, exc: Exception) -> Union[Response, Awaitable[Response]]:
+    if isinstance(exc, RateLimitExceeded):
+        return Response(
+            content="Rate limit exceeded",
+            status_code=429
+        )
+    return Response(
+        content="An error occurred",
+        status_code=500
+    )
+
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 origins: List[str] = ["*"]
 
@@ -306,3 +322,64 @@ async def get_languages() -> JSONResponse:
             detail=f"Error reading languages file: {e}",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+# apis to create and get a paste which returns uuid and url (to be used by SDK)
+@app.post("/api/paste", response_model=PasteResponse)
+async def create_paste(paste: PasteCreate) -> JSONResponse:
+    try:
+        uuid: str = generate_uuid()
+        if uuid in large_uuid_storage:
+            uuid = generate_uuid()
+        
+        uuid_with_extension: str = f"{uuid}.{paste.extension}"
+        path: str = f"data/{uuid_with_extension}"
+        
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(paste.content)
+        
+        large_uuid_storage.append(uuid_with_extension)
+        
+        return JSONResponse(
+            content=PasteResponse(
+                uuid=uuid_with_extension,
+                url=f"{BASE_URL}/paste/{uuid_with_extension}"
+            ).dict(),
+            status_code=status.HTTP_201_CREATED
+        )
+    except Exception as e:
+        raise HTTPException(
+            detail=f"There was an error creating the paste: {str(e)}",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+@app.get("/api/paste/{uuid}", response_model=PasteDetails)
+async def get_paste_details(uuid: str) -> JSONResponse:
+    if not "." in uuid:
+        uuid = _find_without_extension(uuid)
+    path: str = f"data/{uuid}"
+    
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            content: str = f.read()
+        
+        extension: str = Path(path).suffix[1:]
+        
+        return JSONResponse(
+            content=PasteDetails(
+                uuid=uuid,
+                content=content,
+                extension=extension
+            ).dict(),
+            status_code=status.HTTP_200_OK
+        )
+    except FileNotFoundError:
+        raise HTTPException(
+            detail="Paste not found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        raise HTTPException(
+            detail=f"Error retrieving paste: {str(e)}",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+

@@ -90,3 +90,48 @@ def test_post_file_route_size_limit() -> None:
     os.remove(large_file_name)
     assert response.status_code == 413
     assert "File is too large" in response.text
+
+def test_post_api_paste_route() -> None:
+    paste_data = {
+        "content": "This is a test paste content",
+        "extension": "txt"
+    }
+    response = client.post("/api/paste", json=paste_data)
+    assert response.status_code == 201
+    response_json = response.json()
+    assert "uuid" in response_json
+    assert "url" in response_json
+    assert response_json["uuid"].endswith(".txt")
+    assert response_json["url"].startswith("http://paste.fosscu.org/paste/")
+
+    # Clean up: delete the created paste
+    uuid = response_json["uuid"]
+    delete_response = client.delete(f"/paste/{uuid}")
+    assert delete_response.status_code == 200
+
+def test_get_api_paste_route() -> None:
+    # First, create a paste
+    paste_data = {
+        "content": "This is a test paste content for GET",
+        "extension": "md"
+    }
+    create_response = client.post("/api/paste", json=paste_data)
+    assert create_response.status_code == 201
+    created_uuid = create_response.json()["uuid"]
+
+    # Now, test getting the paste
+    response = client.get(f"/api/paste/{created_uuid}")
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["uuid"] == created_uuid
+    assert response_json["content"] == paste_data["content"]
+    assert response_json["extension"] == paste_data["extension"]
+
+    # Clean up: delete the created paste
+    delete_response = client.delete(f"/paste/{created_uuid}")
+    assert delete_response.status_code == 200
+
+def test_get_api_paste_route_not_found() -> None:
+    response = client.get("/api/paste/nonexistent_uuid.txt")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Paste not found"
