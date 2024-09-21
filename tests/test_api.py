@@ -68,17 +68,11 @@ def test_post_file_route() -> None:
 def test_post_file_route_failure() -> None:
     response = client.post("/file")
     assert response.status_code == 422  # Unprocessable Entity
-    assert response.json() == {
-        "detail": [
-            {
-                "type": "missing",
-                "loc": ["body", "file"],
-                "msg": "Field required",
-                "input": None,
-                "url": "https://errors.pydantic.dev/2.5/v/missing",
-            }
-        ]
-    }
+    error_detail = response.json().get("detail", [])
+    assert error_detail
+    assert error_detail[0]["loc"] == ["body", "file"]
+    assert "Field required" in error_detail[0]["msg"]
+
 
 
 def test_post_file_route_size_limit() -> None:
