@@ -15,6 +15,9 @@ from fastapi.responses import (
     RedirectResponse,
     JSONResponse,
 )
+from starlette.requests import Request
+from starlette.responses import Response
+from typing import Callable, Awaitable, List, Optional
 import shutil
 import os
 import json
@@ -30,9 +33,8 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.formatters import HtmlFormatter
 from pygments.util import ClassNotFound
-from typing import List, Optional
 from . import __version__, __author__, __contact__, __url__
-from .schema import PasteCreate, PasteDetails, PasteResponse
+from .schema import PasteCreate, PasteResponse, PasteDetails
 
 description: str = "paste.py 🐍 - A pastebin written in python."
 
@@ -51,7 +53,11 @@ app: FastAPI = FastAPI(
     redoc_url=None,
 )
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> Response:
+    return await _rate_limit_exceeded_handler(request, exc)
+
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 origins: List[str] = ["*"]
 
