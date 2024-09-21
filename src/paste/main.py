@@ -104,7 +104,6 @@ async def post_as_a_file(request: Request, file: UploadFile = File(...)) -> Plai
 
 
 @app.get("/paste/{uuid}")
-@limiter.limit("100/minute")
 async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) -> Response:
     if not "." in uuid:
         uuid = _find_without_extension(uuid)
@@ -145,7 +144,7 @@ async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) ->
                 -ms-user-select: none;
                 user-select: none;
             }
-            
+
             span {
                 font-size: 1.1em !important;
             }
@@ -241,7 +240,6 @@ async def indexpage(request: Request) -> Response:
 
 
 @app.delete("/paste/{uuid}", response_class=PlainTextResponse)
-@limiter.limit("100/minute")
 async def delete_paste(uuid: str) -> PlainTextResponse:
     path: str = f"data/{uuid}"
     try:
@@ -263,7 +261,8 @@ async def web(request: Request) -> Response:
 
 @app.post("/web", response_class=PlainTextResponse)
 @limiter.limit("100/minute")
-async def web_post(request: Request, content: str = Form(...), extension: Optional[str] = Form(None)) -> RedirectResponse:
+async def web_post(request: Request, content: str = Form(...),
+                   extension: Optional[str] = Form(None)) -> RedirectResponse:
     try:
         file_content: bytes = content.encode()
         uuid: str = generate_uuid()
@@ -287,13 +286,11 @@ async def web_post(request: Request, content: str = Form(...), extension: Option
 
 
 @app.get("/health", status_code=status.HTTP_200_OK)
-@limiter.limit("100/minute")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
 @app.get("/languages.json", response_class=JSONResponse)
-@limiter.limit("100/minute")
 async def get_languages() -> JSONResponse:
     try:
         with open(Path(BASE_DIR, "languages.json"), "r") as file:
