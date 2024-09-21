@@ -48,3 +48,13 @@ class PasteBinSDK:
         response = requests.delete(f"{self.base_url}/paste/{uuid}")
         response.raise_for_status()
         return response.text
+
+    def get_languages(self) -> dict:
+        """
+        Get the list of supported languages for syntax highlighting.
+        
+        :return: A dictionary of supported languages
+        """
+        response = requests.get(f"{self.base_url}/languages.json")
+        response.raise_for_status()
+        return response.json()
