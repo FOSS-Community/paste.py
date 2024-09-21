@@ -54,8 +54,17 @@ app: FastAPI = FastAPI(
 )
 app.state.limiter = limiter
 
-async def rate_limit_exceeded_handler(request: Request, exc: Exception) -> Union[Response, Awaitable[Response]]:
-    return _rate_limit_exceeded_handler(request, exc)
+
+def rate_limit_exceeded_handler(request: Request, exc: Exception) -> Union[Response, Awaitable[Response]]:
+    if isinstance(exc, RateLimitExceeded):
+        return Response(
+            content="Rate limit exceeded",
+            status_code=429
+        )
+    return Response(
+        content="An error occurred",
+        status_code=500
+    )
 
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
