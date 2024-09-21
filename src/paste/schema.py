@@ -1,5 +1,5 @@
+from typing import Optional
 from pydantic import BaseModel
-
 
 class Data(BaseModel):
     input_data: str
@@ -15,4 +15,4 @@ class PasteResponse(BaseModel):
 class PasteDetails(BaseModel):
     uuid: str
     content: str
-    extension: Optional[str]
+    extension: Optional[str] = None

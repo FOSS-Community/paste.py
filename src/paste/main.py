@@ -32,6 +32,7 @@ from pygments.formatters import HtmlFormatter
 from pygments.util import ClassNotFound
 from typing import List, Optional
 from . import __version__, __author__, __contact__, __url__
+from .schema import PasteCreate, PasteResponse, PasteDetails
 
 description: str = "paste.py 🐍 - A pastebin written in python."
 
@@ -306,7 +307,6 @@ async def get_languages() -> JSONResponse:
 
 # apis to create and get a paste which returns uuid and url (to be used by SDK)
 @app.post("/api/paste", response_model=PasteResponse)
-@limiter.limit("100/minute")
 async def create_paste(paste: PasteCreate) -> JSONResponse:
     try:
         uuid: str = generate_uuid()
