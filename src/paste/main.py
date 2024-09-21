@@ -32,7 +32,7 @@ from pygments.formatters import HtmlFormatter
 from pygments.util import ClassNotFound
 from typing import List, Optional
 from . import __version__, __author__, __contact__, __url__
-from .schema import PasteCreate, PasteResponse, PasteDetails
+from .schema import PasteCreate, PasteDetails, PasteResponse
 
 description: str = "paste.py 🐍 - A pastebin written in python."
 
@@ -145,7 +145,7 @@ async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) ->
                 -ms-user-select: none;
                 user-select: none;
             }
-            
+
             span {
                 font-size: 1.1em !important;
             }
@@ -235,6 +235,7 @@ async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) ->
 
 
 @app.get("/", response_class=HTMLResponse)
+@limiter.limit("100/minute")
 async def indexpage(request: Request) -> Response:
     return templates.TemplateResponse("index.html", {"request": request})
 
@@ -254,13 +255,15 @@ async def delete_paste(uuid: str) -> PlainTextResponse:
 
 
 @app.get("/web", response_class=HTMLResponse)
+@limiter.limit("100/minute")
 async def web(request: Request) -> Response:
     return templates.TemplateResponse("web.html", {"request": request})
 
 
 @app.post("/web", response_class=PlainTextResponse)
 @limiter.limit("100/minute")
-async def web_post(request: Request, content: str = Form(...), extension: Optional[str] = Form(None)) -> RedirectResponse:
+async def web_post(request: Request, content: str = Form(...),
+                   extension: Optional[str] = Form(None)) -> RedirectResponse:
     try:
         file_content: bytes = content.encode()
         uuid: str = generate_uuid()
