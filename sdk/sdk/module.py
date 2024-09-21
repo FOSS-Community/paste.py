@@ -26,3 +26,14 @@ class PasteBinSDK:
         
         response.raise_for_status()
         return response.text.strip()
+
+    def get_paste(self, uuid: str) -> str:
+        """
+        Retrieve a paste by its unique identifier.
+        
+        :param uuid: The unique identifier of the paste
+        :return: The content of the paste
+        """
+        response = requests.get(f"{self.base_url}/paste/{uuid}")
+        response.raise_for_status()
+        return response.text
