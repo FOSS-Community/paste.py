@@ -50,7 +50,7 @@ app: FastAPI = FastAPI(
     license_info=dict(name="MIT", url="https://opensource.org/license/mit/"),
     openapi_url=None,
     docs_url=None,
-    redoc_url=None,
+    redoc_url="/docs",
 )
 app.state.limiter = limiter
 
