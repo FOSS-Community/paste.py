@@ -48,7 +48,6 @@ app: FastAPI = FastAPI(
         email=__contact__,
     ),
     license_info=dict(name="MIT", url="https://opensource.org/license/mit/"),
-    openapi_url=None,
     docs_url=None,
     redoc_url="/docs",
 )
