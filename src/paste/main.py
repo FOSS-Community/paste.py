@@ -36,7 +36,7 @@ from pygments.util import ClassNotFound
 from . import __version__, __author__, __contact__, __url__
 from .schema import PasteCreate, PasteResponse, PasteDetails
 
-description: str = "paste.py 🐍 - A pastebin written in python."
+DESCRIPTION: str = "paste.py 🐍 - A pastebin written in python."
 
 limiter = Limiter(key_func=get_remote_address)
 app: FastAPI = FastAPI(
@@ -54,16 +54,13 @@ app: FastAPI = FastAPI(
 app.state.limiter = limiter
 
 
-def rate_limit_exceeded_handler(request: Request, exc: Exception) -> Union[Response, Awaitable[Response]]:
+def rate_limit_exceeded_handler(
+    request: Request, exc: Exception
+) -> Union[Response, Awaitable[Response]]:
     if isinstance(exc, RateLimitExceeded):
-        return Response(
-            content="Rate limit exceeded",
-            status_code=429
-        )
-    return Response(
-        content="An error occurred",
-        status_code=500
-    )
+        return Response(content="Rate limit exceeded", status_code=429)
+    return Response(content="An error occurred", status_code=500)
+
 
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
@@ -84,13 +81,14 @@ large_uuid_storage: List[str] = []
 
 BASE_DIR: Path = Path(__file__).resolve().parent
 
-templates: Jinja2Templates = Jinja2Templates(
-    directory=str(Path(BASE_DIR, "templates")))
+templates: Jinja2Templates = Jinja2Templates(directory=str(Path(BASE_DIR, "templates")))
 
 
 @app.post("/file")
 @limiter.limit("100/minute")
-async def post_as_a_file(request: Request, file: UploadFile = File(...)) -> PlainTextResponse:
+async def post_as_a_file(
+    request: Request, file: UploadFile = File(...)
+) -> PlainTextResponse:
     try:
         uuid: str = generate_uuid()
         if uuid in large_uuid_storage:
@@ -119,7 +117,9 @@ async def post_as_a_file(request: Request, file: UploadFile = File(...)) -> Plai
 
 
 @app.get("/paste/{uuid}")
-async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) -> Response:
+async def get_paste_data(
+    request: Request, uuid: str, user_agent: Optional[str] = Header(None)
+) -> Response:
     if not "." in uuid:
         uuid = _find_without_extension(uuid)
     path: str = f"data/{uuid}"
@@ -143,104 +143,26 @@ async def get_paste_data(uuid: str, user_agent: Optional[str] = Header(None)) ->
                 try:
                     lexer = get_lexer_by_name(file_extension, stripall=True)
                 except ClassNotFound:
-                    lexer = get_lexer_by_name(
-                        "text", stripall=True)  # Default lexer
+                    lexer = get_lexer_by_name("text", stripall=True)  # Default lexer
+
             formatter = HtmlFormatter(
-                style="colorful", full=True, linenos="inline", cssclass="code")
+                style="monokai",  # Dark theme base
+                linenos="inline",
+                cssclass="highlight",
+                nowrap=False,
+            )
+
             highlighted_code: str = highlight(content, lexer, formatter)
-            # print(highlighted_code)
-            custom_style = """
-            .code pre span.linenos {
-                color: #999;
-                padding-right: 10px;
-                -webkit-user-select: none;
-                -webkit-touch-callout: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
-                user-select: none;
-            }
 
-            span {
-                font-size: 1.1em !important;
-            }
-
-            pre {
-                line-height: 1.4 !important;
-            }
-
-            .code pre span.linenos::after {
-                content: "";
-                border-right: 1px solid #999;
-                height: 100%;
-                margin-left: 10px;
-            }
-
-            .code {
-                background-color: #fff;
-                border: 1.5px solid #ddd;
-                border-radius: 5px;
-                margin-bottom: 20px;
-                overflow: auto;
-            }
-
-            pre {
-                font-family: 'Consolas','Monaco','Andale Mono','Ubuntu Mono','monospace;' !important;
-            }
-            .copy-button {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: #fff;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            outline: none;
-            }
-            """
-            custom_script = """
-            function copyAllText() {
-            // Create a range object to select the entire document
-            const range = document.createRange();
-            range.selectNode(document.body);
-
-            // Create a selection object and add the range to it
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-
-            // Copy the selected text to the clipboard
-            document.execCommand('copy');
-
-            // Clear the selection to avoid interfering with the user's selection
-            selection.removeAllRanges();
-
-            // You can customize the copied message
-            alert('All text copied to clipboard!');
-        }
-
-            """
-            response_content: str = f"""
-                <html>
-                    <head>
-                        <title>{uuid} | paste.py 🐍</title>
-                        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-                        <style>{custom_style}</style>
-                        <style>{formatter.get_style_defs('.highlight')}</style>
-                    </head>
-                    <body>
-                    <div id="copyButton" class="copy-button" onclick="copyAllText()">
-                        <i class="fas fa-copy"></i>
-                    </div>
-                        {highlighted_code}
-                    </body>
-                    <script>
-                        {custom_script}
-                    </script>
-                </html>
-                """
-            return HTMLResponse(content=response_content)
+            return templates.TemplateResponse(
+                "paste.html",
+                {
+                    "request": request,
+                    "uuid": uuid,
+                    "highlighted_code": highlighted_code,
+                    "pygments_css": formatter.get_style_defs(".highlight"),
+                },
+            )
     except Exception:
         raise HTTPException(
             detail="404: The Requested Resource is not found",
@@ -261,11 +183,13 @@ async def delete_paste(uuid: str) -> PlainTextResponse:
         os.remove(path)
         return PlainTextResponse(f"File successfully deleted {uuid}")
     except FileNotFoundError:
-        raise HTTPException(detail="File Not Found",
-                            status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(
+            detail="File Not Found", status_code=status.HTTP_404_NOT_FOUND
+        )
     except Exception as e:
         raise HTTPException(
-            detail=f"The exception is {e}", status_code=status.HTTP_409_CONFLICT)
+            detail=f"The exception is {e}", status_code=status.HTTP_409_CONFLICT
+        )
 
 
 @app.get("/web", response_class=HTMLResponse)
@@ -276,8 +200,9 @@ async def web(request: Request) -> Response:
 
 @app.post("/web", response_class=PlainTextResponse)
 @limiter.limit("100/minute")
-async def web_post(request: Request, content: str = Form(...),
-                   extension: Optional[str] = Form(None)) -> RedirectResponse:
+async def web_post(
+    request: Request, content: str = Form(...), extension: Optional[str] = Form(None)
+) -> RedirectResponse:
     try:
         file_content: bytes = content.encode()
         uuid: str = generate_uuid()
@@ -297,7 +222,9 @@ async def web_post(request: Request, content: str = Form(...),
             status_code=status.HTTP_403_FORBIDDEN,
         )
 
-    return RedirectResponse(f"{BASE_URL}/paste/{uuid_}", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(
+        f"{BASE_URL}/paste/{uuid_}", status_code=status.HTTP_303_SEE_OTHER
+    )
 
 
 @app.get("/health", status_code=status.HTTP_200_OK)
@@ -322,6 +249,7 @@ async def get_languages() -> JSONResponse:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+
 # apis to create and get a paste which returns uuid and url (to be used by SDK)
 @app.post("/api/paste", response_model=PasteResponse)
 async def create_paste(paste: PasteCreate) -> JSONResponse:
@@ -329,21 +257,20 @@ async def create_paste(paste: PasteCreate) -> JSONResponse:
         uuid: str = generate_uuid()
         if uuid in large_uuid_storage:
             uuid = generate_uuid()
-        
+
         uuid_with_extension: str = f"{uuid}.{paste.extension}"
         path: str = f"data/{uuid_with_extension}"
-        
+
         with open(path, "w", encoding="utf-8") as f:
             f.write(paste.content)
-        
+
         large_uuid_storage.append(uuid_with_extension)
-        
+
         return JSONResponse(
             content=PasteResponse(
-                uuid=uuid_with_extension,
-                url=f"{BASE_URL}/paste/{uuid_with_extension}"
+                uuid=uuid_with_extension, url=f"{BASE_URL}/paste/{uuid_with_extension}"
             ).dict(),
-            status_code=status.HTTP_201_CREATED
+            status_code=status.HTTP_201_CREATED,
         )
     except Exception as e:
         raise HTTPException(
@@ -351,25 +278,24 @@ async def create_paste(paste: PasteCreate) -> JSONResponse:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+
 @app.get("/api/paste/{uuid}", response_model=PasteDetails)
 async def get_paste_details(uuid: str) -> JSONResponse:
     if not "." in uuid:
         uuid = _find_without_extension(uuid)
     path: str = f"data/{uuid}"
-    
+
     try:
         with open(path, "r", encoding="utf-8") as f:
             content: str = f.read()
-        
+
         extension: str = Path(path).suffix[1:]
-        
+
         return JSONResponse(
             content=PasteDetails(
-                uuid=uuid,
-                content=content,
-                extension=extension
+                uuid=uuid, content=content, extension=extension
             ).dict(),
-            status_code=status.HTTP_200_OK
+            status_code=status.HTTP_200_OK,
         )
     except FileNotFoundError:
         raise HTTPException(
@@ -381,4 +307,3 @@ async def get_paste_details(uuid: str) -> JSONResponse:
             detail=f"Error retrieving paste: {str(e)}",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
