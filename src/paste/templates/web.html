@@ -185,6 +185,22 @@
         animation: glitch-2 2s infinite linear alternate-reverse;
     }
 
+    .header-link {
+        text-decoration: none;
+        color: var(--terminal-dark);
+        cursor: pointer;
+    }
+    
+    .header-link:hover .glitch-text {
+        opacity: 0.8;
+        transform: scale(1.02);
+        transition: all 0.2s ease;
+    }
+    
+    .glitch-text u {
+        text-decoration-thickness: 2px;
+    }
+
     @keyframes glitch-1 {
         0% { clip-path: inset(20% 0 30% 0); }
         20% { clip-path: inset(65% 0 1% 0); }
@@ -267,7 +283,9 @@
                 <div class="control minimize"></div>
                 <div class="control maximize"></div>
             </div>
-            <div class="glitch-text" data-text="paste.py 🐍">paste.py 🐍</div>
+            <a href="https://paste.fosscu.org" class="header-link">
+                <div class="glitch-text" data-text="paste.py 🐍"><u>paste.py</u> 🐍</div>
+            </a>
             <div style="width: 50px;"></div>
         </div>
         <form method="post" action="/web">

@@ -211,6 +211,22 @@ body {
 	box-shadow: 0 0 15px var(--terminal-shadow);
 }
 
+.header-link {
+    text-decoration: none;
+    color: var(--terminal-dark);
+    cursor: pointer;
+}
+
+.header-link:hover .glitch-text {
+    opacity: 0.8;
+    transform: scale(1.02);
+    transition: all 0.2s ease;
+}
+
+.glitch-text u {
+    text-decoration-thickness: 2px;
+}
+
 /* Animation Keyframes */
 @keyframes glitch-1 {
 	0% {
@@ -302,7 +318,9 @@ body {
          <div class="control minimize"></div>
          <div class="control maximize"></div>
       </div>
-      <div class="glitch-text" data-text="paste.py 🐍">paste.py 🐍</div>
+      <a href="https://paste.fosscu.org/web" class="header-link">
+		<div class="glitch-text" data-text="paste.py 🐍"><u>paste.py</u> 🐍</div>
+	 </a>
       <div style="width: 50px;"></div>
    </div>
    <button id="copyButton" class="copy-button" onclick="copyAllText()">
