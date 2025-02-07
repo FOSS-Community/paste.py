@@ -23,12 +23,13 @@ def extract_extension(file_name: Path) -> str:
 
 def _find_without_extension(file_name: str) -> str:
     file_list: list = os.listdir("data")
-    pattern_with_dot: Pattern[str] = re.compile(
-        r"^(" + re.escape(file_name) + r")\.")
-    pattern_without_dot: Pattern[str] = re.compile(
-        r"^" + file_name + "$")
+    pattern_with_dot: Pattern[str] = re.compile(r"^(" + re.escape(file_name) + r")\.")
+    pattern_without_dot: Pattern[str] = re.compile(r"^" + file_name + "$")
     math_pattern: list = [
-        x for x in file_list if pattern_with_dot.match(x) or pattern_without_dot.match(x)]
+        x
+        for x in file_list
+        if pattern_with_dot.match(x) or pattern_without_dot.match(x)
+    ]
     if len(math_pattern) == 0:
         return str()
     else:
