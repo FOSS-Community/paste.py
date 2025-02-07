@@ -1,0 +1,393 @@
+{% extends 'base.html' %}
+
+{% block title %} {{ uuid }} | paste.py 🐍 {% endblock %}
+
+{% block headlinks %} 
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+{% endblock %}
+
+{% block style %}
+
+@import url('https://cdnjs.cloudflare.com/ajax/libs/firacode/6.2.0/fira_code.min.css');
+@import url('https://fonts.cdnfonts.com/css/vt323');
+
+:root {
+	--terminal-green: #00ff00;
+	--terminal-dark: #0c0c0c;
+	--terminal-shadow: rgba(0, 255, 0, 0.2);
+	--terminal-font: 'VT323', 'Fira Code', monospace;
+}
+
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background-color: var(--terminal-dark);
+	margin: 0;
+	padding: 20px;
+	font-family: var(--terminal-font);
+	line-height: 1.6;
+	font-size: 20px;
+	color: var(--terminal-green);
+	position: relative;
+	overflow-x: hidden;
+}
+
+/* Matrix Rain Effect */
+#matrix-bg {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	z-index: -1;
+	opacity: 0.15;
+}
+
+.container {
+	max-width: 90%;
+	margin: 20px auto;
+	background-color: rgba(12, 12, 12, 0.95);
+	border: 1px solid var(--terminal-green);
+	border-radius: 0;
+	box-shadow: 0 0 20px var(--terminal-shadow);
+	position: relative;
+	backdrop-filter: blur(5px);
+}
+
+/* Terminal Window Header */
+.terminal-header {
+	background: var(--terminal-green);
+	color: var(--terminal-dark);
+	padding: 12px;
+	font-size: 22px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.terminal-header .controls {
+	display: flex;
+	gap: 8px;
+}
+
+.terminal-header .control {
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	border: 1px solid var(--terminal-dark);
+}
+
+.terminal-header .control.close {
+	background: #ff5f56;
+}
+
+.terminal-header .control.minimize {
+	background: #ffbd2e;
+}
+
+.terminal-header .control.maximize {
+	background: #27c93f;
+}
+
+.glitch-text {
+	position: relative;
+	display: inline-block;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+	content: attr(data-text);
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.glitch-text::before {
+	left: 2px;
+	text-shadow: -2px 0 #ff00ff;
+	animation: glitch-1 2s infinite linear alternate-reverse;
+}
+
+.glitch-text::after {
+	left: -2px;
+	text-shadow: 2px 0 #00ffff;
+	animation: glitch-2 2s infinite linear alternate-reverse;
+}
+
+/* Code Display Styles */
+.code {
+	background-color: rgba(0, 0, 0, 0.7);
+	border: 1px solid var(--terminal-green);
+	margin: 20px;
+	overflow: auto;
+	position: relative;
+}
+
+.code pre {
+	padding: 20px;
+	font-family: 'Fira Code', monospace !important;
+	font-size: 18px !important;
+	line-height: 1.5 !important;
+}
+
+.code pre span.linenos {
+	color: rgba(0, 255, 0, 0.6);
+	padding-right: 20px;
+	user-select: none;
+	border-right: 1px solid rgba(0, 255, 0, 0.3);
+	margin-right: 20px;
+}
+
+/* Syntax Highlighting Override */
+.highlight,
+.highlight pre,
+.highlight span {
+	background-color: transparent !important;
+	color: var(--terminal-green) !important;
+}
+
+.highlight .k,
+.highlight .kd {
+	color: #ff79c6 !important;
+}
+
+.highlight .s,
+.highlight .s1,
+.highlight .s2 {
+	color: #f1fa8c !important;
+}
+
+.highlight .nb,
+.highlight .bp {
+	color: #8be9fd !important;
+}
+
+.highlight .c,
+.highlight .c1 {
+	color: #6272a4 !important;
+}
+
+.highlight .o {
+	color: #ff79c6 !important;
+}
+
+.highlight .n {
+	color: #f8f8f2 !important;
+}
+
+.highlight .mi {
+	color: #bd93f9 !important;
+}
+
+/* Copy Button */
+.copy-button {
+	position: fixed;
+	top: 90px;
+	right: 7%;
+	padding: 12px 20px;
+	background-color: rgba(0, 255, 0, 0.2);
+	color: var(--terminal-green);
+	cursor: pointer;
+	border: 1px solid var(--terminal-green);
+	font-family: var(--terminal-font);
+	font-size: 18px;
+	outline: none;
+	transition: all 0.3s ease;
+	z-index: 100;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.copy-button:hover {
+	background-color: var(--terminal-green);
+	color: var(--terminal-dark);
+	box-shadow: 0 0 15px var(--terminal-shadow);
+}
+
+/* Animation Keyframes */
+@keyframes glitch-1 {
+	0% {
+		clip-path: inset(20% 0 30% 0);
+	}
+
+	20% {
+		clip-path: inset(65% 0 1% 0);
+	}
+
+	40% {
+		clip-path: inset(43% 0 1% 0);
+	}
+
+	60% {
+		clip-path: inset(25% 0 58% 0);
+	}
+
+	80% {
+		clip-path: inset(75% 0 5% 0);
+	}
+
+	100% {
+		clip-path: inset(10% 0 85% 0);
+	}
+}
+
+@keyframes glitch-2 {
+	0% {
+		clip-path: inset(25% 0 58% 0);
+	}
+
+	20% {
+		clip-path: inset(75% 0 5% 0);
+	}
+
+	40% {
+		clip-path: inset(10% 0 85% 0);
+	}
+
+	60% {
+		clip-path: inset(20% 0 30% 0);
+	}
+
+	80% {
+		clip-path: inset(65% 0 1% 0);
+	}
+
+	100% {
+		clip-path: inset(43% 0 1% 0);
+	}
+}
+
+@media only screen and (max-width: 768px) {
+	body {
+		padding: 10px;
+		font-size: 16px;
+	}
+
+	.container {
+		max-width: 95%;
+		margin: 10px auto;
+	}
+
+	.code pre {
+		font-size: 16px !important;
+		padding: 15px;
+	}
+
+	.copy-button {
+		top: 80px;
+		right: 5%;
+		padding: 10px 15px;
+		font-size: 16px;
+	}
+}
+
+{{ pygments_css }}
+
+{% endblock %}
+
+{% block content %}
+
+<canvas id="matrix-bg"></canvas>
+<div class="container">
+   <div class="terminal-header">
+      <div class="controls">
+         <div class="control close"></div>
+         <div class="control minimize"></div>
+         <div class="control maximize"></div>
+      </div>
+      <div class="glitch-text" data-text="paste.py 🐍">paste.py 🐍</div>
+      <div style="width: 50px;"></div>
+   </div>
+   <button id="copyButton" class="copy-button" onclick="copyAllText()">
+   <i class="fas fa-copy"></i> COPY CODE
+   </button>
+   <div class="code">
+      {{ highlighted_code | safe }}
+   </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const canvas = document.getElementById('matrix-bg');
+    const ctx = canvas.getContext('2d');
+ 
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+ 
+    const characters = "ｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ0123456789".split("");
+    const fontSize = 16;
+    const columns = canvas.width / fontSize;
+    const drops = [];
+ 
+    for (let i = 0; i < columns; i++) {
+       drops[i] = 1;
+    }
+ 
+    function draw() {
+       ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+       ctx.fillRect(0, 0, canvas.width, canvas.height);
+ 
+       ctx.fillStyle = "#0F0";
+       ctx.font = fontSize + "px monospace";
+ 
+       for (let i = 0; i < drops.length; i++) {
+          const text = characters[Math.floor(Math.random() * characters.length)];
+          ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+ 
+          if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+             drops[i] = 0;
+          }
+ 
+          drops[i]++;
+       }
+    }
+ 
+    window.addEventListener('resize', () => {
+       canvas.width = window.innerWidth;
+       canvas.height = window.innerHeight;
+    });
+ 
+    setInterval(draw, 35);
+ 
+    // Add boot sequence effect
+    const container = document.querySelector('.container');
+    container.style.opacity = '0';
+ 
+    setTimeout(() => {
+       container.style.transition = 'opacity 0.5s';
+       container.style.opacity = '1';
+    }, 300);
+ });
+ 
+ function copyAllText() {
+    const codeElement = document.querySelector('.code pre');
+    const range = document.createRange();
+    range.selectNode(codeElement);
+ 
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+ 
+    document.execCommand('copy');
+    selection.removeAllRanges();
+ 
+    const copyButton = document.getElementById('copyButton');
+    const originalText = copyButton.innerHTML;
+    copyButton.innerHTML = '<i class="fas fa-check"></i> COPIED!';
+ 
+    setTimeout(() => {
+       copyButton.innerHTML = originalText;
+    }, 2000);
+ }
+
+{% endblock %}
