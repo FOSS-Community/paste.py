@@ -1,120 +1,399 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <title>paste.py 🐍</title>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="og:title" content="paste.py 🐍" />
-    <meta name="og:site_name" content="paste.py" />
-    <meta
-      name="og:description"
-      content="A simple pastebin powered by FastAPI."
-    />
-    <meta name="og:type" content="website" />
-    <meta name="og:url" content="https://paste.fosscu.org" />
-    <meta name="og:locale" content="en_US" />
-    <style>
-      body {
-        font-family: sans-serif;
+{%extends "base.html" %}
+
+{% block title %} paste.py 🐍 {% endblock %}
+
+
+{% block style %}
+    @import url('https://cdnjs.cloudflare.com/ajax/libs/firacode/6.2.0/fira_code.min.css');
+    @import url('https://fonts.cdnfonts.com/css/vt323');
+
+    :root {
+        --terminal-green: #00ff00;
+        --terminal-dark: #0c0c0c;
+        --terminal-shadow: rgba(0, 255, 0, 0.2);
+        --terminal-font: 'VT323', 'Fira Code', monospace;
+        --terminal-link: #00ffff;
+        --terminal-highlight: #39ff14;
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        background-color: var(--terminal-dark);
+        color: var(--terminal-green);
+        font-family: var(--terminal-font);
         margin: 0;
         padding: 20px;
         display: flex;
         flex-direction: column;
         align-items: center;
-      }
+        line-height: 1.8;
+        font-size: 22px;
+        position: relative;
+        overflow-x: hidden;
+    }
 
-      pre {
-        font-family: monospace;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 3px;
-        background-color: #f5f5f5;
-        max-width: 100%;
+    /* Matrix Rain Effect */
+    #matrix-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+        opacity: 0.15;
+    }
+
+    .glitch-text {
+        position: relative;
+        display: inline-block;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .glitch-text::before,
+    .glitch-text::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .glitch-text::before {
+        left: 2px;
+        text-shadow: -2px 0 #ff00ff;
+        animation: glitch-1 2s infinite linear alternate-reverse;
+    }
+
+    .glitch-text::after {
+        left: -2px;
+        text-shadow: 2px 0 #00ffff;
+        animation: glitch-2 2s infinite linear alternate-reverse;
+    }
+
+    @keyframes glitch-1 {
+        0% { clip-path: inset(20% 0 30% 0); }
+        20% { clip-path: inset(65% 0 1% 0); }
+        40% { clip-path: inset(43% 0 1% 0); }
+        60% { clip-path: inset(25% 0 58% 0); }
+        80% { clip-path: inset(75% 0 5% 0); }
+        100% { clip-path: inset(10% 0 85% 0); }
+    }
+
+    @keyframes glitch-2 {
+        0% { clip-path: inset(25% 0 58% 0); }
+        20% { clip-path: inset(75% 0 5% 0); }
+        40% { clip-path: inset(10% 0 85% 0); }
+        60% { clip-path: inset(20% 0 30% 0); }
+        80% { clip-path: inset(65% 0 1% 0); }
+        100% { clip-path: inset(43% 0 1% 0); }
+    }
+
+    .terminal-container {
+        width: 90%;
+        max-width: 1000px;
+        background-color: rgba(12, 12, 12, 0.95);
+        border: 1px solid var(--terminal-green);
+        box-shadow: 0 0 20px var(--terminal-shadow);
+        margin: 20px auto;
+        position: relative;
+        backdrop-filter: blur(5px);
+    }
+
+    .terminal-header {
+        background: var(--terminal-green);
+        color: var(--terminal-dark);
+        padding: 12px;
+        font-size: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .terminal-header .controls {
+        display: flex;
+        gap: 10px;
+    }
+
+    .terminal-header .control {
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        border: 1px solid var(--terminal-dark);
+    }
+
+    .terminal-header .control.close { background: #ff5f56; }
+    .terminal-header .control.minimize { background: #ffbd2e; }
+    .terminal-header .control.maximize { background: #27c93f; }
+
+    .terminal-content {
+        padding: 30px;
+        position: relative;
         overflow-x: auto;
-      }
+    }
 
-      a {
-        color: #007bff;
+    h3 {
+        color: var(--terminal-highlight);
+        margin: 30px 0 20px 0;
+        font-size: 28px;
+        text-transform: uppercase;
+        border-bottom: 2px solid var(--terminal-green);
+        padding-bottom: 8px;
+    }
+
+    h3::before {
+        content: "# ";
+        color: var(--terminal-green);
+    }
+
+    pre {
+        font-family: var(--terminal-font);
+        background-color: rgba(0, 255, 0, 0.1);
+        padding: 20px;
+        border: 1px solid var(--terminal-green);
+        margin: 15px 0;
+        overflow-x: auto;
+        position: relative;
+        font-size: 20px;
+    }
+
+    pre::before {
+        content: "$";
+        color: var(--terminal-highlight);
+        position: absolute;
+        left: 8px;
+    }
+
+    pre code {
+        margin-left: 20px;
+        display: block;
+    }
+
+    a {
+        color: var(--terminal-link);
         text-decoration: none;
-      }
+        transition: all 0.3s ease;
+        border-bottom: 1px solid transparent;
+        font-weight: bold;
+    }
 
-      h3 {
-        margin-bottom: 5px;
-        margin-top: 15px;
-      }
+    a:hover {
+        color: var(--terminal-highlight);
+        border-bottom: 1px solid var(--terminal-highlight);
+        text-shadow: 0 0 8px var(--terminal-highlight);
+    }
 
-      ul {
-        margin-top: 5px;
-      }
+    ul {
+        list-style-type: none;
+        margin: 20px 0;
+        padding-left: 25px;
+    }
 
-      @media only screen and (max-width: 768px) {
-        pre {
-          font-size: 16px;
-          padding: 5px;
+    ul li {
+        margin: 10px 0;
+        font-size: 22px;
+    }
+
+    ul li::before {
+        content: "> ";
+        color: var(--terminal-highlight);
+    }
+
+    strong {
+        color: var(--terminal-highlight);
+    }
+
+    @media only screen and (max-width: 768px) {
+        body {
+            padding: 10px;
+            font-size: 18px;
         }
-      }
-    </style>
-  </head>
-  <body>
-    <pre>
-  <h3>ABOUT</h3>
 
-  <p>A simple pastebin powered by <a href="https://fastapi.tiangolo.com/">FastAPI</a>.</p>
-  <p>paste is Fully Free and Open-Source <a href="https://github.com/FOSS-Community/paste.py">Source Code</a>.</p>
-  <ul>
-    <li>Simple API</li>
-    <li>CLI</li>
-    <li>Web form</li>
-  </ul>
+        .terminal-container {
+            width: 95%;
+            margin: 10px auto;
+        }
 
-  <strong>Web Form:</strong> <a href="https://paste.fosscu.org/web" alt="paste.py web interface">https://paste.fosscu.org/web</a>
+        .terminal-content {
+            padding: 20px;
+        }
 
-  <h3>API USAGE</h3>
+        pre {
+            padding: 15px;
+            font-size: 16px;
+        }
 
-  <p><strong>POST:</strong> https://paste.fosscu.org/paste</p>
-  <p>Send the raw data along. Will respond with a link to the paste.</p>
+        h3 {
+            font-size: 24px;
+        }
+    }
 
-  <ul>
-    <li>201 (CREATED): entire paste uploaded</li>
-    <li>206 (PARTIAL): exceeded server limit</li>
-    <li>Other codes: error</li>
-  </ul>
+    @media only screen and (max-width: 480px) {
+        body {
+            padding: 5px;
+            font-size: 16px;
+        }
 
-  <p>Pasting is heavily rate limited.</p>
+        .terminal-container {
+            width: 98%;
+            margin: 5px auto;
+        }
 
-  <p><strong>GET:</strong> https://paste.fosscu.org/paste/&lt;id&gt;</p>
-  <p>Retrieve the paste with the given id as plain-text.</p>
+        .terminal-content {
+            padding: 15px;
+        }
 
-  <p><strong>DELETE:</strong> https://paste.fosscu.org/paste/&lt;id&gt;</p>
-  <p>Delete the paste with the given id.</p>
+        pre {
+            padding: 12px;
+            font-size: 14px;
+        }
 
-  <h3>EXAMPLES</h3>
+        h3 {
+            font-size: 20px;
+        }
+    }
+{% endblock %}
 
-  <p><strong>cURL:</strong> Paste a file named 'file.txt'</p>
+{% block content %}
+    <canvas id="matrix-bg"></canvas>
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <div class="controls">
+                <div class="control close"></div>
+                <div class="control minimize"></div>
+                <div class="control maximize"></div>
+            </div>
+            <div class="glitch-text" data-text="paste.py 🐍">paste.py 🐍</div>
+            <div style="width: 50px;"></div>
+        </div>
+        <div class="terminal-content">
+            <h3>ABOUT</h3>
+            <p>A simple pastebin powered by FastAPI. </p>
+            <p>paste.py 🐍 is Fully Free and Open-Source <a href="https://github.com/FOSS-Community/paste.py">Source Code</a> </p>
+            <ul>
+                <li>Simple API</li> 
+                <li>CLI</li>
+                <li>Web form</li>
+            </ul>
 
-  <pre>curl -X POST -F "file=@file.txt" https://paste.fosscu.org/file</pre>
+            <p><strong>> Web Form:</strong> <a href="https://paste.fosscu.org/web">https://paste.fosscu.org/web</a></p>
 
-  <p><strong>cURL:</strong> Paste from stdin</p>
+            <h3>API USAGE</h3>
+            <p><strong>> POST:</strong> https://paste.fosscu.org/paste</p>
+            <p>Send the raw data along. Will respond with a link to the paste.</p>
 
-  <pre>echo "Hello, world." | curl -X POST -F "file=@-" https://paste.fosscu.org/file</pre>
+            <ul>
+                <li>201 (CREATED): entire paste uploaded</li>
+                <li>206 (PARTIAL): exceeded server limit</li>
+                <li>Other codes: error</li>
+            </ul>
 
-  <p><strong>cURL:</strong> Delete an existing paste</p>
+            <p>Pasting is heavily rate limited.</p>
 
-  <pre>curl -X DELETE https://paste.fosscu.org/paste/&lt;id&gt;</pre>
+            <p><strong>> GET:</strong> https://paste.fosscu.org/paste/&lt;id&gt;</p>
+            <p>Retrieve the paste with the given id as plain-text.</p>
 
-  <p><strong>Shell function:</strong>
+            <p><strong>> DELETE:</strong> https://paste.fosscu.org/paste/&lt;id&gt;</p>
+            <p>Delete the paste with the given id.</p>
 
-    <pre>function paste() {
-      local file=${1:-/dev/stdin}
-      curl -X POST -F "file=@${file}" https://paste.fosscu.org/file
-}</pre>
+            <h3>EXAMPLES</h3>
+            <p><strong>> cURL:</strong> Paste a file named 'file.txt'</p>
+            <pre><code>curl -X POST -F "file=@file.txt" https://paste.fosscu.org/file</code></pre>
 
-    A shell function that can be added to <strong>.bashrc</strong> or <strong>.bash_profle</strong> or <strong>.zshrc</strong> for
-    quick pasting from the command line. The command takes a filename or reads
-    from stdin if none was supplied and outputs the URL of the paste to
-    stdout: <pre>paste file.txt</pre> <!-- or <pre>echo "hi" | paste</pre></p> -->
+            <p><strong>> cURL:</strong> Paste from stdin</p>
+            <pre><code>echo "Hello, world." | curl -X POST -F "file=@-" https://paste.fosscu.org/file</code></pre>
 
-  
-</pre>
-  </body>
-</html>
+            <p><strong>> cURL:</strong> Delete an existing paste</p>
+            <pre><code>curl -X DELETE https://paste.fosscu.org/paste/&lt;id&gt;</code></pre>
+
+            <p><strong>> Shell function:</strong></p>
+            <pre><code>function paste() {
+    local file=${1:-/dev/stdin}
+    curl -X POST -F "file=@${file}" https://paste.fosscu.org/file
+}</code></pre>
+
+            <p>A shell function that can be added to <strong>.bashrc</strong> or <strong>.bash_profile</strong> or <strong>.zshrc</strong> for
+            quick pasting from the command line. The command takes a filename or reads
+            from stdin if none was supplied and outputs the URL of the paste to stdout:</p>
+
+            <pre><code>paste file.txt</code></pre>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+document.addEventListener('DOMContentLoaded', function() {
+    // Matrix rain effect
+    const canvas = document.getElementById('matrix-bg');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const characters = "ｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ0123456789".split("");
+    const fontSize = 16;
+    const columns = canvas.width / fontSize;
+    const drops = [];
+
+    for (let i = 0; i < columns; i++) {
+        drops[i] = 1;
+    }
+
+    function draw() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#0F0";
+        ctx.font = fontSize + "px monospace";
+
+        for (let i = 0; i < drops.length; i++) {
+            const text = characters[Math.floor(Math.random() * characters.length)];
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                drops[i] = 0;
+            }
+
+            drops[i]++;
+        }
+    }
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    setInterval(draw, 35);
+
+    // Terminal boot sequence effect
+    const container = document.querySelector('.terminal-container');
+    container.style.opacity = '0';
+
+    setTimeout(() => {
+        container.style.transition = 'opacity 0.5s';
+        container.style.opacity = '1';
+    }, 300);
+
+    // Add typing effect to the first paragraph
+    const firstPara = document.querySelector('.terminal-content p');
+    const originalText = firstPara.innerHTML;
+    firstPara.innerHTML = '';
+    let i = 0;
+
+    function typeWriter() {
+        if (i < originalText.length) {
+            firstPara.innerHTML += originalText.charAt(i);
+            i++;
+            setTimeout(typeWriter, 50);
+        }
+    }
+
+    setTimeout(typeWriter, 800);
+});
+{% endblock %}

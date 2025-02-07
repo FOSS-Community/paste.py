@@ -1,173 +1,430 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <title>paste.py 🐍</title>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="og:title" content="paste.py 🐍" />
-    <meta name="og:site_name" content="paste.py" />
-    <meta
-      name="og:description"
-      content="Web form for posting to paste.py. A simple pastebin powered by FastAPI."
-    />
-    <meta name="og:type" content="website" />
-    <meta name="og:url" content="https://paste.fosscu.org/web" />
-    <meta name="og:locale" content="en_US" />
-    <style>
-      body {
-        font-family: sans-serif;
+{% extends 'base.html' %}
+
+{% block title %} paste.py 🐍 {% endblock %}
+
+{% block style %}
+    @import url('https://cdnjs.cloudflare.com/ajax/libs/firacode/6.2.0/fira_code.min.css');
+    @import url('https://fonts.cdnfonts.com/css/vt323');
+
+    :root {
+        --terminal-green: #00ff00;
+        --terminal-dark: #0c0c0c;
+        --terminal-shadow: rgba(0, 255, 0, 0.2);
+        --terminal-font: 'VT323', 'Fira Code', monospace;
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        background-color: var(--terminal-dark);
+        color: var(--terminal-green);
+        font-family: var(--terminal-font);
         margin: 0;
         padding: 20px;
-      }
+        line-height: 1.6;
+        font-size: 20px;
+        position: relative;
+        overflow-x: hidden;
+    }
 
-      .container {
-        max-width: 700px;
+    /* Matrix Rain Effect */
+    #matrix-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+        opacity: 0.15;
+    }
+
+    .container {
+        max-width: 900px;
         margin: 0 auto;
-        padding: 20px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-      }
+        padding: 25px;
+        border: 1px solid var(--terminal-green);
+        border-radius: 0;
+        box-shadow: 0 0 20px var(--terminal-shadow);
+        position: relative;
+        background-color: rgba(12, 12, 12, 0.95);
+        backdrop-filter: blur(5px);
+    }
 
-      textarea {
+    /* Terminal Window Header */
+    .terminal-header {
+        background: var(--terminal-green);
+        color: var(--terminal-dark);
+        padding: 12px;
+        font-size: 22px;
+        border: 1px solid var(--terminal-green);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: -25px -25px 20px -25px;
+    }
+
+    .terminal-header .controls {
+        display: flex;
+        gap: 8px;
+    }
+
+    .terminal-header .control {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 1px solid var(--terminal-dark);
+    }
+
+    .terminal-header .control.close { background: #ff5f56; }
+    .terminal-header .control.minimize { background: #ffbd2e; }
+    .terminal-header .control.maximize { background: #27c93f; }
+
+    .terminal-prompt {
+        color: var(--terminal-green);
+        font-size: 22px;
+        margin: 15px 0 10px 0;
+        font-weight: bold;
+    }
+
+    textarea {
         width: 100%;
-        height: 300px;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
+        height: 350px;
+        padding: 20px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: var(--terminal-green);
+        border: 1px solid var(--terminal-green);
+        border-radius: 0;
         resize: vertical;
-      }
+        font-family: var(--terminal-font);
+        font-size: 20px;
+        box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.1);
+        line-height: 1.4;
+    }
 
-      input[type="submit"] {
+    textarea:focus {
+        outline: none;
+        border-color: var(--terminal-green);
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+    }
+
+    textarea::placeholder {
+        color: rgba(0, 255, 0, 0.3);
+    }
+
+    select {
+        width: 100%;
+        padding: 12px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: var(--terminal-green);
+        border: 1px solid var(--terminal-green);
+        border-radius: 0;
+        margin-top: 10px;
+        font-family: var(--terminal-font);
+        font-size: 20px;
+        cursor: pointer;
+        appearance: none;
+    }
+
+    select:focus {
+        outline: none;
+        border-color: var(--terminal-green);
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+    }
+
+    input[type="submit"] {
         display: block;
         width: 100%;
-        padding: 10px 20px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 3px;
+        padding: 20px;
+        margin-top: 25px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: var(--terminal-green);
+        border: 1px solid var(--terminal-green);
+        border-radius: 0;
         cursor: pointer;
-      }
-      select {
+        font-family: var(--terminal-font);
+        font-size: 24px;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        transition: all 0.3s ease;
+    }
+
+    input[type="submit"]:hover {
+        background-color: var(--terminal-green);
+        color: var(--terminal-dark);
+        box-shadow: 0 0 25px rgba(0, 255, 0, 0.4);
+    }
+
+    .glitch-text {
+        position: relative;
+        display: inline-block;
+    }
+
+    .glitch-text::before,
+    .glitch-text::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        margin-top: 10px;
-      }
+        height: 100%;
+    }
 
-      @media only screen and (max-width: 768px) {
-        .container {
-          padding: 10px;
+    .glitch-text::before {
+        left: 2px;
+        text-shadow: -2px 0 #ff00ff;
+        animation: glitch-1 2s infinite linear alternate-reverse;
+    }
+
+    .glitch-text::after {
+        left: -2px;
+        text-shadow: 2px 0 #00ffff;
+        animation: glitch-2 2s infinite linear alternate-reverse;
+    }
+
+    @keyframes glitch-1 {
+        0% { clip-path: inset(20% 0 30% 0); }
+        20% { clip-path: inset(65% 0 1% 0); }
+        40% { clip-path: inset(43% 0 1% 0); }
+        60% { clip-path: inset(25% 0 58% 0); }
+        80% { clip-path: inset(75% 0 5% 0); }
+        100% { clip-path: inset(10% 0 85% 0); }
+    }
+
+    @keyframes glitch-2 {
+        0% { clip-path: inset(25% 0 58% 0); }
+        20% { clip-path: inset(75% 0 5% 0); }
+        40% { clip-path: inset(10% 0 85% 0); }
+        60% { clip-path: inset(20% 0 30% 0); }
+        80% { clip-path: inset(65% 0 1% 0); }
+        100% { clip-path: inset(43% 0 1% 0); }
+    }
+
+    @media only screen and (max-width: 768px) {
+        body {
+            padding: 10px;
+            font-size: 18px;
         }
-      }
-    </style>
-  </head>
-  <body>
+
+        .container {
+            padding: 15px;
+            margin: 10px;
+            width: 95%;
+        }
+
+        textarea {
+            height: 250px;
+            font-size: 18px;
+            padding: 15px;
+        }
+
+        select, .terminal-prompt {
+            font-size: 18px;
+        }
+
+        input[type="submit"] {
+            font-size: 20px;
+            padding: 15px;
+        }
+    }
+
+    @media only screen and (max-width: 480px) {
+        body {
+            padding: 5px;
+            font-size: 16px;
+        }
+
+        .container {
+            padding: 10px;
+            margin: 5px;
+        }
+
+        textarea {
+            height: 200px;
+            font-size: 16px;
+        }
+
+        select, .terminal-prompt {
+            font-size: 16px;
+        }
+
+        input[type="submit"] {
+            font-size: 18px;
+            padding: 12px;
+        }
+    }
+{% endblock %}
+
+{% block content %}
+    <canvas id="matrix-bg"></canvas>
     <div class="container">
-      <form method="post" action="/web">
-        <select name="language" id="language">
-          <!-- Options will be dynamically added here -->
-        </select>
-        <select name="extension" id="extension" style="display: none">
-          <!-- Options will be dynamically added here -->
-        </select>
-        <br />
-        <textarea
-          name="content"
-          required
-          minlength="1"
-          maxlength="393216"
-          placeholder="Paste your code here..."
-          cols="80"
-          rows="10"
-        ></textarea>
-        <br />
-        <input type="submit" value="Paste!" />
-      </form>
+        <div class="terminal-header">
+            <div class="controls">
+                <div class="control close"></div>
+                <div class="control minimize"></div>
+                <div class="control maximize"></div>
+            </div>
+            <div class="glitch-text" data-text="paste.py 🐍">paste.py 🐍</div>
+            <div style="width: 50px;"></div>
+        </div>
+        <form method="post" action="/web">
+            <div class="terminal-prompt">$ SELECT LANGUAGE:</div>
+            <select name="language" id="language">
+                <!-- Options will be dynamically added here -->
+            </select>
+
+            <div class="terminal-prompt">$ EXTENSION:</div>
+            <select name="extension" id="extension" style="display: none">
+                <!-- Options will be dynamically added here -->
+            </select>
+            <br />
+            <div class="terminal-prompt">$ ENTER CODE:</div>
+            <textarea
+                name="content"
+                required
+                minlength="1"
+                maxlength="393216"
+                placeholder="[INPUT YOUR CODE HERE...]"
+                cols="80"
+                rows="10"
+            ></textarea>
+            <br />
+            <input type="submit" value="EXECUTE PASTE" />
+        </form>
     </div>
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        var languageSelect = document.getElementById("language");
-        var extensionSelect = document.getElementById("extension");
+{% endblock %}
 
-        languageSelect.addEventListener("change", function () {
-          var selectedLanguage = languageSelect.value;
-          var selectedLanguageData = findLanguageData(selectedLanguage);
+{% block script %}
+document.addEventListener("DOMContentLoaded", function () {
+    // Matrix rain effect
+    const canvas = document.getElementById('matrix-bg');
+    const ctx = canvas.getContext('2d');
 
-          // Clear the extension dropdown before updating
-          clearDropdown(extensionSelect);
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-          if (selectedLanguageData && selectedLanguageData.extensions) {
+    const characters = "ｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ0123456789".split("");
+    const fontSize = 16;
+    const columns = canvas.width / fontSize;
+    const drops = [];
+
+    for (let i = 0; i < columns; i++) {
+        drops[i] = 1;
+    }
+
+    function draw() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#0F0";
+        ctx.font = fontSize + "px monospace";
+
+        for (let i = 0; i < drops.length; i++) {
+            const text = characters[Math.floor(Math.random() * characters.length)];
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                drops[i] = 0;
+            }
+
+            drops[i]++;
+        }
+    }
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    setInterval(draw, 35);
+
+    // Form functionality
+    var languageSelect = document.getElementById("language");
+    var extensionSelect = document.getElementById("extension");
+
+    // Add terminal boot sequence effect
+    function simulateBootSequence() {
+        const container = document.querySelector('.container');
+        container.style.opacity = '0';
+
+        setTimeout(() => {
+            container.style.transition = 'opacity 1s';
+            container.style.opacity = '1';
+        }, 500);
+    }
+
+    simulateBootSequence();
+
+    languageSelect.addEventListener("change", function () {
+        var selectedLanguage = languageSelect.value;
+        var selectedLanguageData = findLanguageData(selectedLanguage);
+
+        clearDropdown(extensionSelect);
+
+        if (selectedLanguageData && selectedLanguageData.extensions) {
             if (selectedLanguageData.extensions.length > 1) {
-              // Show the extension dropdown
-              extensionSelect.style.display = "block";
-              extensionSelect.style.opacity = 1;
-              extensionSelect.style.cursor = "auto";
+                extensionSelect.style.display = "block";
+                extensionSelect.style.opacity = 1;
+                extensionSelect.style.cursor = "auto";
 
-              // Populate the extension dropdown with options for each extension
-              selectedLanguageData.extensions.forEach(function (ext) {
+                selectedLanguageData.extensions.forEach(function (ext) {
+                    var extOption = document.createElement("option");
+                    extOption.value = ext;
+                    extOption.text = ext;
+                    extensionSelect.add(extOption);
+                });
+            } else {
+                var ext = selectedLanguageData.extensions[0];
                 var extOption = document.createElement("option");
                 extOption.value = ext;
                 extOption.text = ext;
                 extensionSelect.add(extOption);
-              });
-            } else {
-              // Hide the extension dropdown if the language has only one extension
-              var ext = selectedLanguageData.extensions[0];
-              var extOption = document.createElement("option");
-              extOption.value = ext;
-              extOption.text = ext;
-              extensionSelect.add(extOption);
-              extensionSelect.style.display = "block";
-              extensionSelect.style.opacity = 0.5;
-              extensionSelect.style.cursor = "no-drop";
+                extensionSelect.style.display = "block";
+                extensionSelect.style.opacity = 0.5;
+                extensionSelect.style.cursor = "no-drop";
             }
-          } else {
-            // Hide the extension dropdown if no extensions are available for the selected language
+        } else {
             extensionSelect.style.display = "none";
-          }
-        });
+        }
+    });
 
-        async function fetchLanguages() {
-          try {
+    async function fetchLanguages() {
+        try {
             const response = await fetch("/languages.json");
             window.programmingLanguages = await response.json();
-
             populateLanguageDropdown(window.programmingLanguages);
-          } catch (error) {
+        } catch (error) {
             console.error("Error fetching languages:", error);
-          }
         }
+    }
 
-        function populateLanguageDropdown(languages) {
-          languages.forEach(function (language) {
+    function populateLanguageDropdown(languages) {
+        languages.forEach(function (language) {
             var option = document.createElement("option");
             option.value = language.name;
             option.text = language.name;
             languageSelect.add(option);
-          });
+        });
 
-          // Trigger the change event to initialize the dropdown state
-          var event = new Event("change");
-          languageSelect.dispatchEvent(event);
-        }
+        var event = new Event("change");
+        languageSelect.dispatchEvent(event);
+    }
 
-        function clearDropdown(dropdown) {
-          // Clear all options from the dropdown
-          while (dropdown.options.length > 0) {
+    function clearDropdown(dropdown) {
+        while (dropdown.options.length > 0) {
             dropdown.remove(0);
-          }
         }
+    }
 
-        function findLanguageData(languageName) {
-          // Find the data for the selected language
-          return window.programmingLanguages.find(
+    function findLanguageData(languageName) {
+        return window.programmingLanguages.find(
             (language) => language.name === languageName
-          );
-        }
+        );
+    }
 
-        fetchLanguages();
-      });
-    </script>
-  </body>
-</html>
+    fetchLanguages();
+});
+{% endblock %}
