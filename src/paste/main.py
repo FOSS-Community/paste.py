@@ -1,40 +1,45 @@
+import json
+import os
+import shutil
+from pathlib import Path
+from typing import Any, Awaitable, Callable, List, Optional, Union
+
 from fastapi import (
-    File,
-    UploadFile,
-    HTTPException,
-    status,
-    Request,
-    Form,
     FastAPI,
+    File,
+    Form,
     Header,
+    HTTPException,
+    Request,
     Response,
+    UploadFile,
+    status,
 )
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (
-    PlainTextResponse,
     HTMLResponse,
-    RedirectResponse,
     JSONResponse,
+    PlainTextResponse,
+    RedirectResponse,
 )
+from fastapi.templating import Jinja2Templates
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import get_lexer_by_name, guess_lexer
+from pygments.util import ClassNotFound
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 from starlette.requests import Request
 from starlette.responses import Response
-from typing import Callable, Awaitable, List, Optional, Union, Any
-import shutil
-import os
-import json
-from pathlib import Path
-from fastapi.templating import Jinja2Templates
-from fastapi.middleware.cors import CORSMiddleware
-from slowapi.errors import RateLimitExceeded
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from .utils import generate_uuid, _find_without_extension
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.exception_handlers import http_exception_handler
+
+from . import __author__, __contact__, __url__, __version__
 from .middleware import LimitUploadSize
-from pygments import highlight
-from pygments.lexers import get_lexer_by_name, guess_lexer
-from pygments.formatters import HtmlFormatter
-from pygments.util import ClassNotFound
-from . import __version__, __author__, __contact__, __url__
-from .schema import PasteCreate, PasteResponse, PasteDetails
+from .schema import PasteCreate, PasteDetails, PasteResponse
+from .utils import _find_without_extension, generate_uuid
+from .config import get_settings
 
 DESCRIPTION: str = "paste.py 🐍 - A pastebin written in python."
 
@@ -64,9 +69,37 @@ def rate_limit_exceeded_handler(
 
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(
+    request: Request, exc: StarletteHTTPException
+) -> Response:
+    """
+    Custom exception handler for HTTP exceptions.
+    """
+    if exc.status_code == 404:
+        user_agent = request.headers.get("user-agent", "")
+        is_browser_request = "Mozilla" in user_agent
+
+        if is_browser_request:
+            try:
+                return templates.TemplateResponse(
+                    "404.html", {"request": request}, status_code=404
+                )
+            except Exception as e:
+                print(f"Template error: {e}")  # For debugging
+                return PlainTextResponse("404: Template Error", status_code=404)
+        else:
+            return PlainTextResponse(
+                "404: The requested resource was not found", status_code=404
+            )
+
+    return PlainTextResponse(str(exc.detail), status_code=exc.status_code)
+
+
 origins: List[str] = ["*"]
 
-BASE_URL: str = r"http://paste.fosscu.org"
+BASE_URL: str = get_settings().BASE_URL
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
