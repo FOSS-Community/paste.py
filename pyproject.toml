@@ -1,16 +1,17 @@
 [project]
-name = ""
-version = ""
-description = ""
 authors = [
     {name = "Kanishk Pachauri", email = "itskanishkp.py@gmail.com"},
 ]
 dependencies = [
     "fastapi[all]>=0.104.1",
-    "sqlalchemy>=2.0.23",
+    "sqlalchemy>=2.0.38",
     "jinja2>=3.1.2",
     "slowapi>=0.1.8",
     "pygments>=2.17.2",
+    "alembic>=1.14.1",
+    "pydantic-settings>=2.7.1",
+    "minio>=7.2.15",
+    "psycopg2-binary>=2.9.10",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -22,6 +23,8 @@ start = "uvicorn src.paste.main:app --host 0.0.0.0 --port 8080 --workers 4"
 dev = "uvicorn src.paste.main:app --host 0.0.0.0 --port 8080 --reload"
 test = "pytest"
 mypy = "mypy src/paste"
+make_migration = "alembic revision --autogenerate -m 'run migration via pdm'"
+migrate = "alembic upgrade head"
 
 [tool.pdm.dev-dependencies]
 test = [
@@ -32,13 +35,18 @@ lint = [
     "ruff>=0.1.9",
     "black>=23.12.1",
 ]
-hooks = [
-    "pre-commit>=3.6.0",
-]
-typing = [
-    "mypy>=1.8.0",
-]
 
 [tool.ruff]
 line-length = 160
 exclude = ["data/*", ".git"]
+[dependency-groups]
+typing = [
+    "mypy>=1.8.0",
+    "isort",
+]
+test = ["pytest>=7.4.3", "requests>=2.31.0"]
+lint = ["ruff>=0.1.9", "black>=23.12.1"]
+hooks = [
+    "pre-commit>=3.6.0",
+    "isort>=6.0.0",
+]

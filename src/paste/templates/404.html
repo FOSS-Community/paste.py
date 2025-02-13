@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+
+{% block title %} 404 - Page Not Found | paste.py 🐍 {% endblock %}
+
+{% block headlinks %} 
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+{% endblock %}
+
+{% block style %}
+
+@import url('https://fonts.cdnfonts.com/css/vt323');
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/firacode/6.2.0/fira_code.min.css');
+
+        :root {
+            --terminal-green: #00ff00;
+            --terminal-dark: #0c0c0c;
+            --terminal-shadow: rgba(0, 255, 0, 0.2);
+            --terminal-font: 'VT323', 'Fira Code', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--terminal-dark);
+            margin: 0;
+            padding: 20px;
+            font-family: var(--terminal-font);
+            line-height: 1.6;
+            font-size: 20px;
+            color: var(--terminal-green);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            opacity: 0.15;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background-color: rgba(12, 12, 12, 0.95);
+            border: 1px solid var(--terminal-green);
+            box-shadow: 0 0 20px var(--terminal-shadow);
+            position: relative;
+            backdrop-filter: blur(5px);
+        }
+
+        .terminal-header {
+            background: var(--terminal-green);
+            color: var(--terminal-dark);
+            padding: 12px;
+            font-size: 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .control {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid var(--terminal-dark);
+        }
+
+        .control.close { background: #ff5f56; }
+        .control.minimize { background: #ffbd2e; }
+        .control.maximize { background: #27c93f; }
+
+        .terminal-body {
+            padding: 30px;
+            min-height: 300px;
+        }
+
+        .error-code {
+            font-size: 72px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px var(--terminal-shadow);
+            animation: glitch 1s infinite;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 24px;
+            background-color: var(--terminal-green);
+            margin-left: 5px;
+            animation: blink 1s infinite;
+        }
+
+        .command-line {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .prompt {
+            color: var(--terminal-green);
+            margin-right: 10px;
+        }
+
+        .message {
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+
+        .action-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--terminal-green);
+            text-decoration: none;
+            border: 1px solid var(--terminal-green);
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .action-link:hover {
+            background-color: var(--terminal-green);
+            color: var(--terminal-dark);
+            box-shadow: 0 0 15px var(--terminal-shadow);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 0 0 10px var(--terminal-shadow); }
+            25% { text-shadow: -2px 0 #ff00ff, 2px 0 #00ffff; }
+            50% { text-shadow: 0 0 10px var(--terminal-shadow); }
+            75% { text-shadow: 2px 0 #ff00ff, -2px 0 #00ffff; }
+            100% { text-shadow: 0 0 10px var(--terminal-shadow); }
+        }
+
+        @media only screen and (max-width: 768px) {
+            body {
+                padding: 10px;
+                font-size: 16px;
+            }
+
+            .container {
+                width: 95%;
+            }
+
+            .error-code {
+                font-size: 48px;
+            }
+
+            .terminal-body {
+                padding: 20px;
+            }
+        }
+
+{% endblock %}
+
+{% block content %}
+
+<canvas id="matrix-bg"></canvas>
+    <div class="container">
+        <div class="terminal-header">
+            <div class="controls">
+                <div class="control close"></div>
+                <div class="control minimize"></div>
+                <div class="control maximize"></div>
+            </div>
+            <a href="{{ url_for('indexpage') }}" class="header-link">
+                <div style="color: var(--terminal-dark);"><u>paste.py</u> 🐍</div>
+            </a>
+            <div style="width: 50px;"></div>
+        </div>
+        <div class="terminal-body">
+            <div class="error-code">Error 404</div>
+            <div class="command-line">
+                <span class="prompt">$</span>
+                <span class="typed-text">locate requested_page</span>
+                <span class="cursor"></span>
+            </div>
+            <div class="message">
+                <p>> Page not found in filesystem</p>
+                <p>> The requested resource could not be located on this server</p>
+                <p>> Running diagnostic...</p>
+                <p>> Suggestion: Return to home directory</p>
+            </div>
+            <a href="{{ url_for('indexpage') }}" class="action-link">$ cd /home</a>
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block script %}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const canvas = document.getElementById('matrix-bg');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const characters = "ｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ0123456789".split("");
+    const fontSize = 16;
+    const columns = canvas.width / fontSize;
+    const drops = [];
+
+    for(let i = 0; i < columns; i++) {
+        drops[i] = 1;
+    }
+
+    function draw() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#0F0";
+        ctx.font = fontSize + "px monospace";
+
+        for(let i = 0; i < drops.length; i++) {
+            const text = characters[Math.floor(Math.random() * characters.length)];
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+            if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                drops[i] = 0;
+            }
+
+            drops[i]++;
+        }
+    }
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    setInterval(draw, 35);
+
+    // Boot sequence effect
+    const container = document.querySelector('.container');
+    container.style.opacity = '0';
+
+    setTimeout(() => {
+        container.style.transition = 'opacity 0.5s';
+        container.style.opacity = '1';
+    }, 300);
+});
+
+{% endblock %}

@@ -1,10 +1,9 @@
-version: '3.8'
-
 services:
   myapp:
-    build:
-      context: .
-      target: builder
+    image: mrsunglasses/pastepy:latest
+    env_file:
+      - .env
     ports:
-      - "8080:8080"
+      - "8082:8080"
+    entrypoint: ["./docker-entrypoint.sh"]
     command: ["pdm", "run", "start"]

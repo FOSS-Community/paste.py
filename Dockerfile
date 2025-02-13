@@ -9,13 +9,14 @@ RUN pip install pdm
 
 # copy files
 COPY pyproject.toml pdm.lock README.md /project/
-COPY data/ project/data
-COPY src/ /project/src
+COPY . /project/
 
 
 WORKDIR /project
 
 RUN pdm install
+RUN chmod +x docker-entrypoint.sh
+
 
 EXPOSE 8080
 CMD ["pdm", "run", "start"]
