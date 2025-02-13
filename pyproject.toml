@@ -10,6 +10,8 @@ dependencies = [
     "pygments>=2.17.2",
     "alembic>=1.14.1",
     "pydantic-settings>=2.7.1",
+    "minio>=7.2.15",
+    "psycopg2-binary>=2.9.10",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -21,6 +23,8 @@ start = "uvicorn src.paste.main:app --host 0.0.0.0 --port 8080 --workers 4"
 dev = "uvicorn src.paste.main:app --host 0.0.0.0 --port 8080 --reload"
 test = "pytest"
 mypy = "mypy src/paste"
+make_migration = "alembic revision --autogenerate -m 'run migration via pdm'"
+migrate = "alembic upgrade head"
 
 [tool.pdm.dev-dependencies]
 test = [
