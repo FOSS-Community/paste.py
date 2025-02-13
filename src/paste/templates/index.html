@@ -6,6 +6,7 @@
 {% block style %}
     @import url('https://cdnjs.cloudflare.com/ajax/libs/firacode/6.2.0/fira_code.min.css');
     @import url('https://fonts.cdnfonts.com/css/vt323');
+    @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
     :root {
         --terminal-green: #00ff00;
@@ -274,6 +275,61 @@
             font-size: 20px;
         }
     }
+
+    .code-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    pre {
+        font-family: var(--terminal-font);
+        background-color: rgba(0, 255, 0, 0.1);
+        padding: 20px;
+        border: 1px solid var(--terminal-green);
+        margin: 15px 0;
+        overflow-x: auto;
+        position: relative;
+        font-size: 20px;
+        flex-grow: 1;
+    }
+
+    .copy-button {
+        background: transparent;
+        border: none;
+        color: var(--terminal-green);
+        cursor: pointer;
+        padding: 5px;
+        transition: all 0.3s ease;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.7;
+    }
+
+    .copy-button:hover {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    .copy-button.copied {
+        color: var(--terminal-highlight);
+    }
+
+    pre::before {
+        content: "$";
+        color: var(--terminal-highlight);
+        position: absolute;
+        left: 8px;
+    }
+
+    pre code {
+        margin-left: 20px;
+        display: block;
+    }
+
 {% endblock %}
 
 {% block content %}
@@ -322,25 +378,40 @@
 
             <h3>EXAMPLES</h3>
             <p><strong>> cURL:</strong> Paste a file named 'file.txt'</p>
-            <pre><code>curl -X POST -F "file=@file.txt" https://paste.fosscu.org/file</code></pre>
+            <div class="code-container">
+                <pre><code>curl -X POST -F "file=@file.txt" https://paste.fosscu.org/file</code></pre>
+                <button class="copy-button" title="Copy to clipboard"><i class="fas fa-clipboard"></i></button>
+            </div>
 
             <p><strong>> cURL:</strong> Paste from stdin</p>
-            <pre><code>echo "Hello, world." | curl -X POST -F "file=@-" https://paste.fosscu.org/file</code></pre>
+            <div class="code-container">
+                <pre><code>echo "Hello, world." | curl -X POST -F "file=@-" https://paste.fosscu.org/file</code></pre>
+                <button class="copy-button" title="Copy to clipboard"><i class="fas fa-clipboard"></i></button>
+            </div>
 
             <p><strong>> cURL:</strong> Delete an existing paste</p>
-            <pre><code>curl -X DELETE https://paste.fosscu.org/paste/&lt;id&gt;</code></pre>
+            <div class="code-container">
+                <pre><code>curl -X DELETE https://paste.fosscu.org/paste/<id></code></pre>
+                <button class="copy-button" title="Copy to clipboard"><i class="fas fa-clipboard"></i></button>
+            </div>
 
             <p><strong>> Shell function:</strong></p>
-            <pre><code>function paste() {
+            <div class="code-container">
+                <pre><code>function paste() {
     local file=${1:-/dev/stdin}
     curl -X POST -F "file=@${file}" https://paste.fosscu.org/file
 }</code></pre>
+                <button class="copy-button" title="Copy to clipboard"><i class="fas fa-clipboard"></i></button>
+            </div>
 
             <p>A shell function that can be added to <strong>.bashrc</strong> or <strong>.bash_profile</strong> or <strong>.zshrc</strong> for
             quick pasting from the command line. The command takes a filename or reads
             from stdin if none was supplied and outputs the URL of the paste to stdout:</p>
 
-            <pre><code>paste file.txt</code></pre>
+            <div class="code-container">
+                <pre><code>paste file.txt</code></pre>
+                <button class="copy-button" title="Copy to clipboard"><i class="fas fa-clipboard"></i></button>
+            </div>
         </div>
     </div>
 {% endblock %}
@@ -388,6 +459,58 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     setInterval(draw, 35);
+
+    // Add copy button functionality
+    document.querySelectorAll('.copy-button').forEach(button => {
+        button.addEventListener('click', async () => {
+            // Get the associated pre element and extract its text content
+            const codeContainer = button.closest('.code-container');
+            const codeElement = codeContainer.querySelector('code');
+            const textToCopy = codeElement.textContent.trim();
+
+            try {
+                // Create a temporary textarea element to handle the copy
+                const textarea = document.createElement('textarea');
+                textarea.value = textToCopy;
+                textarea.style.position = 'fixed';  // Ensure it's always on screen
+                textarea.style.opacity = '0';       // Make it invisible
+                document.body.appendChild(textarea);
+                textarea.select();
+                
+                // Try both modern and legacy copy methods
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(textToCopy);
+                } else {
+                    document.execCommand('copy');
+                }
+                
+                document.body.removeChild(textarea);
+
+                // Visual feedback
+                button.classList.add('copied');
+                const icon = button.querySelector('i');
+                icon.classList.remove('fa-clipboard');
+                icon.classList.add('fa-check');
+                
+                setTimeout(() => {
+                    button.classList.remove('copied');
+                    icon.classList.remove('fa-check');
+                    icon.classList.add('fa-clipboard');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+                const icon = button.querySelector('i');
+                icon.classList.remove('fa-clipboard');
+                icon.classList.add('fa-times');
+                
+                setTimeout(() => {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-clipboard');
+                }, 2000);
+            }
+        });
+    });
+
 
     // Terminal boot sequence effect
     const container = document.querySelector('.terminal-container');
