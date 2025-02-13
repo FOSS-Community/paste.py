@@ -1,5 +1,4 @@
 name: CD Pipeline
-
 on:
   workflow_run:
     workflows: ["CI Pipeline"]
@@ -9,13 +8,24 @@ on:
 jobs:
   build:
     runs-on: self-hosted
-
     steps:
-      - name: Create data Folder
-        run: mkdir -p data
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          echo "MINIO_CLIENT_LINK=${{ secrets.MINIO_CLIENT_LINK }}" >> .env
+          echo "MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}" >> .env
+          echo "MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}" >> .env
+          echo "MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }}" >> .env
+          echo "BASE_URL=${{ secrets.BASE_URL }}" >> .env
+          echo "SQLALCHEMY_DATABASE_URL=${{ secrets.SQLALCHEMY_DATABASE_URL }}" >> .env
+
       - name: Pull Docker image
-        run: docker pull mrsunglasses/pastepy
-      - name: Delete Old docker container
-        run: docker rm -f pastepyprod || true
-      - name: Run Docker Container
-        run: docker run -d -p 8082:8080 -v $(pwd)/data:/project/data --name pastepyprod mrsunglasses/pastepy
+        run: docker compose pull
+
+      - name: Stop and remove existing container
+        run: docker compose down || true
+
+      - name: Start Docker container
+        run: docker compose up -d

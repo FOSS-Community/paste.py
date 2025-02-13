@@ -304,7 +304,7 @@ body {
 	}
 }
 
-{{ pygments_css }}
+{{ pygments_css | safe }}
 
 {% endblock %}
 
@@ -318,7 +318,7 @@ body {
          <div class="control minimize"></div>
          <div class="control maximize"></div>
       </div>
-      <a href="https://paste.fosscu.org/web" class="header-link">
+      <a href="{{ url_for('indexpage') }}" class="header-link">
 		<div class="glitch-text" data-text="paste.py 🐍"><u>paste.py</u> 🐍</div>
 	 </a>
       <div style="width: 50px;"></div>

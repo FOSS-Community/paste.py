@@ -201,6 +201,63 @@
         text-decoration-thickness: 2px;
     }
 
+    select#expiration {
+        width: 100%;
+        padding: 12px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: var(--terminal-green);
+        border: 1px solid var(--terminal-green);
+        border-radius: 0;
+        margin-top: 10px;
+        font-family: var(--terminal-font);
+        font-size: 20px;
+        cursor: pointer;
+        appearance: none;
+        text-transform: uppercase;
+    }
+    
+    select#expiration:focus {
+        outline: none;
+        border-color: var(--terminal-green);
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+    }
+    
+    select#expiration option {
+        background-color: var(--terminal-dark);
+        color: var(--terminal-green);
+        font-family: var(--terminal-font);
+        padding: 12px;
+    }
+
+    input[type="datetime-local"] {
+        width: 100%;
+        padding: 12px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: var(--terminal-green);
+        border: 1px solid var(--terminal-green);
+        border-radius: 0;
+        margin-top: 10px;
+        font-family: var(--terminal-font);
+        font-size: 20px;
+        cursor: pointer;
+    }
+    
+    input[type="datetime-local"]:focus {
+        outline: none;
+        border-color: var(--terminal-green);
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+    }
+    
+    /* Style the calendar popup */
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+        filter: invert(1) sepia(100%) saturate(10000%) hue-rotate(100deg);
+        cursor: pointer;
+    }
+    
+    #custom-expiry-container {
+        margin-top: 15px;
+    }
+
     @keyframes glitch-1 {
         0% { clip-path: inset(20% 0 30% 0); }
         20% { clip-path: inset(65% 0 1% 0); }
@@ -283,7 +340,7 @@
                 <div class="control minimize"></div>
                 <div class="control maximize"></div>
             </div>
-            <a href="https://paste.fosscu.org" class="header-link">
+            <a href="{{ url_for('indexpage') }}" class="header-link">
                 <div class="glitch-text" data-text="paste.py 🐍"><u>paste.py</u> 🐍</div>
             </a>
             <div style="width: 50px;"></div>
@@ -309,6 +366,30 @@
                 cols="80"
                 rows="10"
             ></textarea>
+            <br />
+            <!-- Add the expiration field here -->
+            <div class="terminal-prompt">$ EXPIRES IN:</div>
+            <select name="expiration" id="expiration">
+                <option value="">NEVER</option>
+                <option value="1min">1 MINUTE</option>
+                <option value="1h">1 HOUR</option>
+                <option value="1d">1 DAY</option>
+                <option value="1w">1 WEEK</option>
+                <option value="1m">1 MONTH</option>
+                <option value="custom">CUSTOM DATE</option>
+            </select>
+
+            <!-- Add custom date-time picker -->
+            <div id="custom-expiry-container" style="display: none;">
+                <div class="terminal-prompt">$ CUSTOM EXPIRY DATE:</div>
+                <input 
+                    type="datetime-local" 
+                    name="custom_expiry" 
+                    id="custom-expiry"
+                    min="" 
+                />
+            </div>
+
             <br />
             <input type="submit" value="EXECUTE PASTE" />
         </form>
@@ -444,5 +525,57 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     fetchLanguages();
+
+    const expirationSelect = document.getElementById('expiration');
+    const customExpiryContainer = document.getElementById('custom-expiry-container');
+    const customExpiryInput = document.getElementById('custom-expiry');
+
+    // Set minimum date-time to current date-time
+    function updateMinDateTime() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 5); // Set minimum 5 minutes from now
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        
+        customExpiryInput.min = `${year}-${month}-${day}T${hours}:${minutes}`;
+        
+        // If the current value is before the minimum, update it
+        if (customExpiryInput.value && customExpiryInput.value < customExpiryInput.min) {
+            customExpiryInput.value = customExpiryInput.min;
+        }
+    }
+
+    expirationSelect.addEventListener('change', function() {
+        if (this.value === 'custom') {
+            customExpiryContainer.style.display = 'block';
+            updateMinDateTime();
+        } else {
+            customExpiryContainer.style.display = 'none';
+        }
+    });
+
+    // Update min date-time every minute
+    setInterval(updateMinDateTime, 60000);
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (expirationSelect.value === 'custom') {
+            if (!customExpiryInput.value) {
+                e.preventDefault();
+                alert('Please select a custom expiry date and time');
+            }
+            
+            const selectedDate = new Date(customExpiryInput.value);
+            const now = new Date();
+            
+            if (selectedDate <= now) {
+                e.preventDefault();
+                alert('Please select a future date and time');
+            }
+        }
+    });
 });
 {% endblock %}

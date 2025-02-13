@@ -182,7 +182,7 @@
                 <div class="control minimize"></div>
                 <div class="control maximize"></div>
             </div>
-            <a href="https://paste.fosscu.org" class="header-link">
+            <a href="{{ url_for('indexpage') }}" class="header-link">
                 <div style="color: var(--terminal-dark);"><u>paste.py</u> 🐍</div>
             </a>
             <div style="width: 50px;"></div>
@@ -200,7 +200,7 @@
                 <p>> Running diagnostic...</p>
                 <p>> Suggestion: Return to home directory</p>
             </div>
-            <a href="/" class="action-link">$ cd /home</a>
+            <a href="{{ url_for('indexpage') }}" class="action-link">$ cd /home</a>
         </div>
     </div>
 

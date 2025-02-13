@@ -285,7 +285,7 @@
                 <div class="control minimize"></div>
                 <div class="control maximize"></div>
             </div>
-            <a href="https://paste.fosscu.org/web" class="header-link">
+            <a href="{{ url_for('indexpage') }}" class="header-link">
                 <div class="glitch-text" data-text="paste.py 🐍"><u>paste.py</u> 🐍</div>
             </a>
             <div style="width: 50px;"></div>
@@ -300,7 +300,7 @@
                 <li>Web form</li>
             </ul>
 
-            <p><strong>> Web Form:</strong> <a href="https://paste.fosscu.org/web">https://paste.fosscu.org/web</a></p>
+            <p><strong>> Web Form:</strong> <a href="{{ url_for('web') }}">https://paste.fosscu.org/web</a></p>
 
             <h3>API USAGE</h3>
             <p><strong>> POST:</strong> https://paste.fosscu.org/paste</p>
