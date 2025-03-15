@@ -400,6 +400,7 @@
                 <pre><code>function paste() {
     local file=${1:-/dev/stdin}
     curl -X POST -F "file=@${file}" https://paste.fosscu.org/file
+    echo '\n'
 }</code></pre>
                 <button class="copy-button" title="Copy to clipboard"><i class="fas fa-clipboard"></i></button>
             </div>
