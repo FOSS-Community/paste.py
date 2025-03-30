@@ -1,6 +1,7 @@
 import requests
-from typing import Optional, Union
+from typing import Union
 from pathlib import Path
+
 
 class PasteBinSDK:
     def __init__(self, base_url: str = "https://paste.fosscu.org"):
@@ -15,17 +16,14 @@ class PasteBinSDK:
         """
         try:
             if isinstance(content, Path):
-                with open(content, 'r', encoding='utf-8') as f:
+                with open(content, "r", encoding="utf-8") as f:
                     content = f.read()
 
-            data = {
-                'content': content,
-                'extension': file_extension
-            }
+            data = {"content": content, "extension": file_extension}
             response = requests.post(f"{self.base_url}/api/paste", json=data)
             response.raise_for_status()
             result = response.json()
-            return result['uuid']
+            return result["uuid"]
         except requests.RequestException as e:
             raise RuntimeError(f"Error creating paste: {str(e)}")
 

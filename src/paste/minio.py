@@ -15,20 +15,16 @@ client = Minio(
 )
 
 
-def get_object_data(
-    object_name: str, bucket_name: str = get_settings().MINIO_BUCKET_NAME
-) -> str | None:
+def get_object_data(object_name: str, bucket_name: str = get_settings().MINIO_BUCKET_NAME) -> str | None:
     response = None
     data = None
     try:
         response = client.get_object(bucket_name, object_name)
         data = response.read()
     except S3Error as exc:
-        raise Exception(f"error occured.", exc)
+        raise Exception("error occured.", exc)
     except Exception as exc:
-        raise FileNotFoundError(
-            f"Failed to retrieve file '{object_name}' from bucket '{bucket_name}': {exc}"
-        )
+        raise FileNotFoundError(f"Failed to retrieve file '{object_name}' from bucket '{bucket_name}': {exc}")
     finally:
         if response:
             response.close()
@@ -65,9 +61,7 @@ def post_object_data(
         )
         return object_url
     except S3Error as exc:
-        raise Exception(
-            f"Failed to upload file '{object_name}' to bucket '{bucket_name}': {exc}"
-        )
+        raise Exception(f"Failed to upload file '{object_name}' to bucket '{bucket_name}': {exc}")
 
 
 def post_object_data_as_file(
@@ -81,17 +75,11 @@ def post_object_data_as_file(
 
         client.fput_object(bucket_name, object_name, source_file_path)
     except S3Error as exc:
-        raise Exception(
-            f"Failed to upload file '{object_name}' to bucket '{bucket_name}': {exc}"
-        )
+        raise Exception(f"Failed to upload file '{object_name}' to bucket '{bucket_name}': {exc}")
 
 
-def delete_object_data(
-    object_name: str, bucket_name: str = get_settings().MINIO_BUCKET_NAME
-) -> None:
+def delete_object_data(object_name: str, bucket_name: str = get_settings().MINIO_BUCKET_NAME) -> None:
     try:
         client.remove_object(bucket_name, object_name)
     except S3Error as exc:
-        raise Exception(
-            f"Failed to delete file '{object_name}' from bucket '{bucket_name}': {exc}"
-        )
+        raise Exception(f"Failed to delete file '{object_name}' from bucket '{bucket_name}': {exc}")
