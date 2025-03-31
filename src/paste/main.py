@@ -5,20 +5,17 @@ import time
 from datetime import datetime, timedelta, timezone
 from logging.config import dictConfig
 from pathlib import Path
-from typing import Any, Awaitable, Callable, List, Optional, Union
+from typing import Awaitable, List, Optional, Union
 
-from fastapi import (Depends, FastAPI, File, Form, Header, HTTPException,
-                     Query, Request, Response, UploadFile, status)
-from fastapi.exception_handlers import http_exception_handler
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import (HTMLResponse, JSONResponse, PlainTextResponse,
-                               RedirectResponse)
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.util import ClassNotFound
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from sqlalchemy import text
@@ -34,8 +31,7 @@ from .logging import LogConfig
 from .middleware import LimitUploadSize
 from .minio import get_object_data, post_object_data
 from .models import Paste
-from .schema import (HealthErrorResponse, HealthResponse, PasteCreate,
-                     PasteDetails, PasteResponse)
+from .schema import HealthErrorResponse, HealthResponse, PasteCreate, PasteDetails, PasteResponse
 from .utils import _filter_object_name_from_link, extract_uuid
 
 # --------------------------------------------------------------------
@@ -54,7 +50,6 @@ logger = logging.getLogger("paste")
 async def delete_expired_urls() -> None:
     while True:
         try:
-
             db: Session = Session_Local()
 
             current_time = datetime.utcnow()
@@ -95,9 +90,7 @@ app: FastAPI = FastAPI(
 app.state.limiter = limiter
 
 
-def rate_limit_exceeded_handler(
-    request: Request, exc: Exception
-) -> Union[Response, Awaitable[Response]]:
+def rate_limit_exceeded_handler(request: Request, exc: Exception) -> Union[Response, Awaitable[Response]]:
     if isinstance(exc, RateLimitExceeded):
         return Response(content="Rate limit exceeded", status_code=429)
     return Response(content="An error occurred", status_code=500)
@@ -107,9 +100,7 @@ app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 
 @app.exception_handler(StarletteHTTPException)
-async def custom_http_exception_handler(
-    request: Request, exc: StarletteHTTPException
-) -> Response:
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException) -> Response:
     # Check if it's an API route
     if request.url.path.startswith("/api/"):
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
@@ -121,16 +112,12 @@ async def custom_http_exception_handler(
 
         if is_browser_request:
             try:
-                return templates.TemplateResponse(
-                    "404.html", {"request": request}, status_code=404
-                )
+                return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
             except Exception as e:
                 logger.error(f"Template error: {e}")
                 return PlainTextResponse("404: Template Error", status_code=404)
         else:
-            return PlainTextResponse(
-                "404: The requested resource was not found", status_code=404
-            )
+            return PlainTextResponse("404: The requested resource was not found", status_code=404)
 
     return PlainTextResponse(str(exc.detail), status_code=exc.status_code)
 
@@ -176,9 +163,7 @@ async def indexpage(request: Request) -> Response:
     "/health",
     status_code=status.HTTP_200_OK,
     response_model=HealthResponse,
-    responses={
-        503: {"model": HealthErrorResponse, "description": "Database connection failed"}
-    },
+    responses={503: {"model": HealthErrorResponse, "description": "Database connection failed"}},
 )
 async def health(db: Session = Depends(get_db)) -> HealthResponse:
     """
@@ -193,9 +178,7 @@ async def health(db: Session = Depends(get_db)) -> HealthResponse:
         db.execute(text("SELECT 1"))
         end_time = time.time()
 
-        return HealthResponse(
-            db_response_time_ms=round((end_time - start_time) * 1000, 2)
-        )
+        return HealthResponse(db_response_time_ms=round((end_time - start_time) * 1000, 2))
 
     except Exception as e:
         db.rollback()
@@ -287,9 +270,7 @@ async def get_paste_data(
 async def post_as_a_file(
     request: Request,
     file: UploadFile = File(...),
-    expiration: Optional[str] = Query(
-        None, description="Expiration time: '1h', '1d', '1w', '1m', or ISO datetime"
-    ),
+    expiration: Optional[str] = Query(None, description="Expiration time: '1h', '1d', '1w', '1m', or ISO datetime"),
     db: Session = Depends(get_db),
 ) -> PlainTextResponse:
     try:
@@ -316,9 +297,7 @@ async def post_as_a_file(
             else:
                 # Try parsing as ISO format datetime
                 try:
-                    expiration_time = datetime.fromisoformat(
-                        expiration.replace("Z", "+00:00")
-                    )
+                    expiration_time = datetime.fromisoformat(expiration.replace("Z", "+00:00"))
                     if expiration_time <= current_time:
                         raise HTTPException(
                             detail="Expiration time must be in the future",
@@ -340,24 +319,20 @@ async def post_as_a_file(
             db.commit()
             db.refresh(file_data)
             _uuid = file_data.pasteID
-            return PlainTextResponse(
-                f"{BASE_URL}/paste/{_uuid}", status_code=status.HTTP_201_CREATED
-            )
+            return PlainTextResponse(f"{BASE_URL}/paste/{_uuid}", status_code=status.HTTP_201_CREATED)
         else:
             file_data = Paste(content=file_content, extension=file_extension)
             db.add(file_data)
             db.commit()
             db.refresh(file_data)
             _uuid = file_data.pasteID
-            return PlainTextResponse(
-                f"{BASE_URL}/paste/{_uuid}", status_code=status.HTTP_201_CREATED
-            )
+            return PlainTextResponse(f"{BASE_URL}/paste/{_uuid}", status_code=status.HTTP_201_CREATED)
 
     except Exception as e:
         db.rollback()
         logger.error(f"Error uploading file: {e}")
         raise HTTPException(
-            detail=f"There was an error uploading the file",
+            detail="There was an error uploading the file",
             status_code=status.HTTP_403_FORBIDDEN,
         )
     finally:
@@ -375,14 +350,12 @@ async def delete_paste(uuid: str, db: Session = Depends(get_db)) -> PlainTextRes
             db.commit()
             return PlainTextResponse(f"File successfully deleted {uuid}")
         else:
-            raise HTTPException(
-                detail="File Not Found", status_code=status.HTTP_404_NOT_FOUND
-            )
+            raise HTTPException(detail="File Not Found", status_code=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         db.rollback()
         raise HTTPException(
             logger.error(f"Error deleting paste: {e}"),
-            detail=f"There is an error happend.",
+            detail="There is an error happend.",
             status_code=status.HTTP_409_CONFLICT,
         )
     finally:
@@ -427,9 +400,7 @@ async def web_post(
             elif expiration == "custom" and custom_expiry:
                 # Parse the custom expiry datetime string
                 try:
-                    expiration_time = datetime.fromisoformat(
-                        custom_expiry.replace("Z", "+00:00")
-                    )
+                    expiration_time = datetime.fromisoformat(custom_expiry.replace("Z", "+00:00"))
                 except ValueError:
                     raise HTTPException(
                         detail="Invalid custom expiry date format",
@@ -448,20 +419,14 @@ async def web_post(
             db.commit()
             db.refresh(file)
             _uuid = file.pasteID
-            return RedirectResponse(
-                f"{BASE_URL}/paste/{_uuid}", status_code=status.HTTP_303_SEE_OTHER
-            )
+            return RedirectResponse(f"{BASE_URL}/paste/{_uuid}", status_code=status.HTTP_303_SEE_OTHER)
         else:
-            file = Paste(
-                content=content, extension=extension, expiresat=expiration_time
-            )
+            file = Paste(content=content, extension=extension, expiresat=expiration_time)
             db.add(file)
             db.commit()
             db.refresh(file)
             _uuid = file.pasteID
-            return RedirectResponse(
-                f"{BASE_URL}/paste/{_uuid}", status_code=status.HTTP_303_SEE_OTHER
-            )
+            return RedirectResponse(f"{BASE_URL}/paste/{_uuid}", status_code=status.HTTP_303_SEE_OTHER)
     except Exception as e:
         db.rollback()
         raise HTTPException(
@@ -479,9 +444,7 @@ async def web_post(
 
 @app.get("/api/paste/{uuid}", response_model=PasteDetails)
 @limiter.limit("100/minute")
-async def get_paste_details(
-    request: Request, uuid: str, db: Session = Depends(get_db)
-) -> JSONResponse:
+async def get_paste_details(request: Request, uuid: str, db: Session = Depends(get_db)) -> JSONResponse:
     try:
         uuid = extract_uuid(uuid)
         data = db.query(Paste).filter(Paste.pasteID == uuid).first()
@@ -499,10 +462,10 @@ async def get_paste_details(
                 detail="Paste not found",
                 status_code=status.HTTP_404_NOT_FOUND,
             )
-    except Exception as e:
+    except Exception:
         db.rollback()
         raise HTTPException(
-            detail=f"Error retrieving paste",
+            detail="Error retrieving paste",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
     finally:
@@ -511,11 +474,8 @@ async def get_paste_details(
 
 @app.post("/api/paste", response_model=PasteResponse)
 @limiter.limit("100/minute")
-async def create_paste(
-    request: Request, paste: PasteCreate, db: Session = Depends(get_db)
-) -> JSONResponse:
+async def create_paste(request: Request, paste: PasteCreate, db: Session = Depends(get_db)) -> JSONResponse:
     try:
-
         # Calculate expiration time if provided
         expiration_time = None
         if paste.expiration:
@@ -552,9 +512,7 @@ async def create_paste(
             db.refresh(file)
             _uuid = file.pasteID
             return JSONResponse(
-                content=PasteResponse(
-                    uuid=_uuid, url=f"{BASE_URL}/paste/{_uuid}"
-                ).model_dump(),
+                content=PasteResponse(uuid=_uuid, url=f"{BASE_URL}/paste/{_uuid}").model_dump(),
                 status_code=status.HTTP_201_CREATED,
             )
         else:
@@ -568,18 +526,16 @@ async def create_paste(
             db.refresh(file)
             _uuid = file.pasteID
             return JSONResponse(
-                content=PasteResponse(
-                    uuid=_uuid, url=f"{BASE_URL}/paste/{_uuid}"
-                ).model_dump(),
+                content=PasteResponse(uuid=_uuid, url=f"{BASE_URL}/paste/{_uuid}").model_dump(),
                 status_code=status.HTTP_201_CREATED,
             )
     except HTTPException:
         db.rollback()
         raise
-    except Exception as e:
+    except Exception:
         db.rollback()
         raise HTTPException(
-            detail=f"There was an error creating the paste",
+            detail="There was an error creating the paste",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
     finally:
@@ -605,6 +561,6 @@ async def get_languages() -> JSONResponse:
     except Exception as e:
         logger.error(f"Error reading languages file: {e}")
         raise HTTPException(
-            detail=f"Error reading languages file",
+            detail="Error reading languages file",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
