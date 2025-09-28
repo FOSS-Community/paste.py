@@ -71,7 +71,6 @@ def test_post_file_route_failure() -> None:
     # Add body assertion in future.
 
 
-
 def test_post_file_route_size_limit() -> None:
     large_file_name: str = "large_file.txt"
     file_size: int = 20 * 1024 * 1024  # 20 MB in bytes
@@ -91,11 +90,9 @@ def test_post_file_route_size_limit() -> None:
     assert response.status_code == 413
     assert "File is too large" in response.text
 
+
 def test_post_api_paste_route() -> None:
-    paste_data = {
-        "content": "This is a test paste content",
-        "extension": "txt"
-    }
+    paste_data = {"content": "This is a test paste content", "extension": "txt"}
     response = client.post("/api/paste", json=paste_data)
     assert response.status_code == 201
     response_json = response.json()
@@ -109,12 +106,10 @@ def test_post_api_paste_route() -> None:
     delete_response = client.delete(f"/paste/{uuid}")
     assert delete_response.status_code == 200
 
+
 def test_get_api_paste_route() -> None:
     # First, create a paste
-    paste_data = {
-        "content": "This is a test paste content for GET",
-        "extension": "md"
-    }
+    paste_data = {"content": "This is a test paste content for GET", "extension": "md"}
     create_response = client.post("/api/paste", json=paste_data)
     assert create_response.status_code == 201
     created_uuid = create_response.json()["uuid"]
@@ -130,6 +125,7 @@ def test_get_api_paste_route() -> None:
     # Clean up: delete the created paste
     delete_response = client.delete(f"/paste/{created_uuid}")
     assert delete_response.status_code == 200
+
 
 def test_get_api_paste_route_not_found() -> None:
     response = client.get("/api/paste/nonexistent_uuid.txt")

@@ -1,5 +1,6 @@
 from sdk.module import PasteBinSDK
 
+
 def test_pastebin_sdk():
     sdk = PasteBinSDK()
 
@@ -22,6 +23,7 @@ def test_pastebin_sdk():
 
     except RuntimeError as e:
         print(f"An error occurred: {e}")
+
 
 if __name__ == "__main__":
     test_pastebin_sdk()
