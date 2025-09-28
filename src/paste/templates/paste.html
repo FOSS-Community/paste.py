@@ -188,7 +188,6 @@ body {
 /* Copy Button */
 .copy-button {
 	position: fixed;
-	top: 90px;
 	right: 7%;
 	padding: 12px 20px;
 	background-color: rgba(0, 255, 0, 0.2);
@@ -297,10 +296,17 @@ body {
 	}
 
 	.copy-button {
-		top: 80px;
 		right: 5%;
 		padding: 10px 15px;
 		font-size: 16px;
+	}
+
+	.copy-button:nth-child(2) {
+		top: 80px;
+	}
+
+	.copy-button:nth-child(3) {
+		top: 135px;
 	}
 }
 
@@ -323,8 +329,11 @@ body {
 	 </a>
       <div style="width: 50px;"></div>
    </div>
-   <button id="copyButton" class="copy-button" onclick="copyAllText()">
+   <button id="copyButton" class="copy-button" onclick="copyAllText()" style="top: 90px;">
    <i class="fas fa-copy"></i> COPY CODE
+   </button>
+   <button id="copyLinkButton" class="copy-button" onclick="copyLink()" style="top: 145px;">
+   <i class="fas fa-link"></i> COPY LINK
    </button>
    <div class="code">
       {{ highlighted_code | safe }}
@@ -406,6 +415,58 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(() => {
        copyButton.innerHTML = originalText;
     }, 2000);
+ }
+
+ function copyLink() {
+    const currentUrl = window.location.href;
+    
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(currentUrl).then(() => {
+            const copyLinkButton = document.getElementById('copyLinkButton');
+            const originalText = copyLinkButton.innerHTML;
+            copyLinkButton.innerHTML = '<i class="fas fa-check"></i> LINK COPIED!';
+            
+            setTimeout(() => {
+                copyLinkButton.innerHTML = originalText;
+            }, 2000);
+        }).catch(() => {
+            fallbackCopyLink(currentUrl);
+        });
+    } else {
+        fallbackCopyLink(currentUrl);
+    }
+ }
+
+ function fallbackCopyLink(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+        document.execCommand('copy');
+        const copyLinkButton = document.getElementById('copyLinkButton');
+        const originalText = copyLinkButton.innerHTML;
+        copyLinkButton.innerHTML = '<i class="fas fa-check"></i> LINK COPIED!';
+        
+        setTimeout(() => {
+            copyLinkButton.innerHTML = originalText;
+        }, 2000);
+    } catch (err) {
+        const copyLinkButton = document.getElementById('copyLinkButton');
+        const originalText = copyLinkButton.innerHTML;
+        copyLinkButton.innerHTML = '<i class="fas fa-times"></i> COPY FAILED';
+        
+        setTimeout(() => {
+            copyLinkButton.innerHTML = originalText;
+        }, 2000);
+    }
+
+    document.body.removeChild(textArea);
  }
 
 {% endblock %}
