@@ -185,10 +185,19 @@ body {
 	color: #bd93f9 !important;
 }
 
+/* Copy Buttons Container */
+.copy-buttons-container {
+	position: absolute;
+	right: 20px;
+	top: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	z-index: 100;
+}
+
 /* Copy Button */
 .copy-button {
-	position: fixed;
-	right: 7%;
 	padding: 12px 20px;
 	background-color: rgba(0, 255, 0, 0.2);
 	color: var(--terminal-green);
@@ -198,7 +207,6 @@ body {
 	font-size: 18px;
 	outline: none;
 	transition: all 0.3s ease;
-	z-index: 100;
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -295,18 +303,14 @@ body {
 		padding: 15px;
 	}
 
+	.copy-buttons-container {
+		right: 10px;
+		top: 10px;
+	}
+
 	.copy-button {
-		right: 5%;
 		padding: 10px 15px;
 		font-size: 16px;
-	}
-
-	.copy-button:nth-child(2) {
-		top: 80px;
-	}
-
-	.copy-button:nth-child(3) {
-		top: 135px;
 	}
 }
 
@@ -329,12 +333,14 @@ body {
 	 </a>
       <div style="width: 50px;"></div>
    </div>
-   <button id="copyButton" class="copy-button" onclick="copyAllText()" style="top: 90px;">
+   <div class="copy-buttons-container">
+   <button id="copyButton" class="copy-button" onclick="copyAllText()">
    <i class="fas fa-copy"></i> COPY CODE
    </button>
-   <button id="copyLinkButton" class="copy-button" onclick="copyLink()" style="top: 145px;">
+   <button id="copyLinkButton" class="copy-button" onclick="copyLink()">
    <i class="fas fa-link"></i> COPY LINK
    </button>
+</div>
    <div class="code">
       {{ highlighted_code | safe }}
    </div>
