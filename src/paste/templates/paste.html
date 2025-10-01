@@ -189,7 +189,7 @@ body {
 .copy-buttons-container {
 	position: absolute;
 	right: 20px;
-	top: 20px;
+	top: 70px;
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
@@ -305,7 +305,7 @@ body {
 
 	.copy-buttons-container {
 		right: 10px;
-		top: 10px;
+		top: 60px;
 	}
 
 	.copy-button {
@@ -331,16 +331,15 @@ body {
       <a href="{{ url_for('indexpage') }}" class="header-link">
 		<div class="glitch-text" data-text="paste.py 🐍"><u>paste.py</u> 🐍</div>
 	 </a>
-      <div style="width: 50px;"></div>
+      <div class="copy-buttons-container">
+         <button id="copyButton" class="copy-button" onclick="copyAllText()">
+         <i class="fas fa-copy"></i> COPY CODE
+         </button>
+         <button id="copyLinkButton" class="copy-button" onclick="copyLink()">
+         <i class="fas fa-link"></i> COPY LINK
+         </button>
+      </div>
    </div>
-   <div class="copy-buttons-container">
-   <button id="copyButton" class="copy-button" onclick="copyAllText()">
-   <i class="fas fa-copy"></i> COPY CODE
-   </button>
-   <button id="copyLinkButton" class="copy-button" onclick="copyLink()">
-   <i class="fas fa-link"></i> COPY LINK
-   </button>
-</div>
    <div class="code">
       {{ highlighted_code | safe }}
    </div>
@@ -402,77 +401,75 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 300);
  });
  
- function copyAllText() {
-    const codeElement = document.querySelector('.code pre');
-    const range = document.createRange();
-    range.selectNode(codeElement);
- 
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
- 
-    document.execCommand('copy');
-    selection.removeAllRanges();
- 
-    const copyButton = document.getElementById('copyButton');
-    const originalText = copyButton.innerHTML;
-    copyButton.innerHTML = '<i class="fas fa-check"></i> COPIED!';
- 
+ function showCopyFeedback(button, success, successHTML, failureHTML) {
+    const originalText = button.innerHTML;
+    button.innerHTML = success ? successHTML : failureHTML;
     setTimeout(() => {
-       copyButton.innerHTML = originalText;
+       button.innerHTML = originalText;
     }, 2000);
  }
-
- function copyLink() {
-    const currentUrl = window.location.href;
-    
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(currentUrl).then(() => {
-            const copyLinkButton = document.getElementById('copyLinkButton');
-            const originalText = copyLinkButton.innerHTML;
-            copyLinkButton.innerHTML = '<i class="fas fa-check"></i> LINK COPIED!';
-            
-            setTimeout(() => {
-                copyLinkButton.innerHTML = originalText;
-            }, 2000);
-        }).catch(() => {
-            fallbackCopyLink(currentUrl);
-        });
-    } else {
-        fallbackCopyLink(currentUrl);
-    }
- }
-
- function fallbackCopyLink(text) {
+ 
+ function fallbackCopy(textToCopy, button, successHTML, failureHTML) {
     const textArea = document.createElement("textarea");
-    textArea.value = text;
+    textArea.value = textToCopy;
     textArea.style.position = "fixed";
     textArea.style.left = "-999999px";
     textArea.style.top = "-999999px";
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-
+ 
+    let success = false;
     try {
-        document.execCommand('copy');
-        const copyLinkButton = document.getElementById('copyLinkButton');
-        const originalText = copyLinkButton.innerHTML;
-        copyLinkButton.innerHTML = '<i class="fas fa-check"></i> LINK COPIED!';
-        
-        setTimeout(() => {
-            copyLinkButton.innerHTML = originalText;
-        }, 2000);
+       success = document.execCommand('copy');
     } catch (err) {
-        const copyLinkButton = document.getElementById('copyLinkButton');
-        const originalText = copyLinkButton.innerHTML;
-        copyLinkButton.innerHTML = '<i class="fas fa-times"></i> COPY FAILED';
-        
-        setTimeout(() => {
-            copyLinkButton.innerHTML = originalText;
-        }, 2000);
+       console.error('Fallback copy failed', err);
     }
-
+ 
     document.body.removeChild(textArea);
+    showCopyFeedback(button, success, successHTML, failureHTML);
+ }
+ 
+ function copyAllText() {
+    const codeElement = document.querySelector('.code pre');
+    if (!codeElement) return;
+ 
+    const clone = codeElement.cloneNode(true);
+    const lineNumbers = clone.querySelectorAll('.linenos');
+    lineNumbers.forEach(span => span.remove());
+    const textToCopy = clone.textContent;
+ 
+    const copyButton = document.getElementById('copyButton');
+    const successHTML = '<i class="fas fa-check"></i> COPIED!';
+    const failureHTML = '<i class="fas fa-times"></i> FAILED!';
+ 
+    if (navigator.clipboard) {
+       navigator.clipboard.writeText(textToCopy).then(() => {
+          showCopyFeedback(copyButton, true, successHTML, failureHTML);
+       }).catch(err => {
+          console.error('Async copy failed, using fallback', err);
+          fallbackCopy(textToCopy, copyButton, successHTML, failureHTML);
+       });
+    } else {
+       fallbackCopy(textToCopy, copyButton, successHTML, failureHTML);
+    }
+ }
+ 
+ function copyLink() {
+    const currentUrl = window.location.href;
+    const copyLinkButton = document.getElementById('copyLinkButton');
+    const successHTML = '<i class="fas fa-check"></i> LINK COPIED!';
+    const failureHTML = '<i class="fas fa-times"></i> COPY FAILED';
+ 
+    if (navigator.clipboard) {
+       navigator.clipboard.writeText(currentUrl).then(() => {
+          showCopyFeedback(copyLinkButton, true, successHTML, failureHTML);
+       }).catch(() => {
+          fallbackCopy(currentUrl, copyLinkButton, successHTML, failureHTML);
+       });
+    } else {
+       fallbackCopy(currentUrl, copyLinkButton, successHTML, failureHTML);
+    }
  }
 
 {% endblock %}
