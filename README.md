@@ -4,7 +4,7 @@
 
 <hr>
 
-paste.py 🐍 - A pastebin written in python.
+paste.py 🐍 - A pastebin written in python..
 
 # 🤔 Pre-requisites
 
