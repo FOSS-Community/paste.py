@@ -29,7 +29,7 @@ from .config import get_settings
 from .database import Session_Local, get_db
 from .logging import LogConfig
 from .middleware import LimitUploadSize
-from .minio import get_object_data, post_object_data
+from .minio import create_bucket_if_not_exists, delete_object_data, get_object_data, post_object_data
 from .models import Paste
 from .schema import HealthErrorResponse, HealthResponse, PasteCreate, PasteDetails, PasteResponse
 from .utils import _filter_object_name_from_link, extract_uuid
@@ -58,6 +58,12 @@ async def delete_expired_urls() -> None:
             expired_urls = db.query(Paste).filter(Paste.expiresat <= current_time).all()
 
             for url in expired_urls:
+                if url.s3_link:
+                    try:
+                        object_name = _filter_object_name_from_link(url.s3_link)
+                        delete_object_data(object_name)
+                    except Exception as s3_err:
+                        logger.error(f"Failed to delete S3 object for expired paste {url.pasteID}: {s3_err}")
                 db.delete(url)
 
             db.commit()
@@ -126,6 +132,11 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(delete_expired_urls())
+
+
+@app.on_event("startup")
+async def startup_event():
+    create_bucket_if_not_exists()
 
 
 origins: List[str] = ["*"]
@@ -214,7 +225,7 @@ async def get_paste_data(
             content = data.content
             extension = data.extension
         else:
-            content = get_object_data(_filter_object_name_from_link(data.s3_link))
+            content = get_object_data(data.s3_link)
             extension = data.extension
 
         extension = extension[1::] if extension.startswith(".") else extension
@@ -346,16 +357,28 @@ async def delete_paste(uuid: str, db: Session = Depends(get_db)) -> PlainTextRes
     try:
         data = db.query(Paste).filter(Paste.pasteID == uuid).first()
         if data:
+            if data.s3_link:
+                try:
+                    object_name = _filter_object_name_from_link(data.s3_link)
+                    delete_object_data(object_name)
+                except Exception as s3_err:
+                    logger.error(f"Failed to delete S3 object for paste {uuid}: {s3_err}")
+                    raise HTTPException(
+                        detail="Failed to delete associated S3 data.",
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
             db.delete(data)
             db.commit()
             return PlainTextResponse(f"File successfully deleted {uuid}")
         else:
             raise HTTPException(detail="File Not Found", status_code=status.HTTP_404_NOT_FOUND)
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
+        logger.error(f"Error deleting paste: {e}")
         raise HTTPException(
-            logger.error(f"Error deleting paste: {e}"),
-            detail="There is an error happend.",
+            detail="There is an error happened.",
             status_code=status.HTTP_409_CONFLICT,
         )
     finally:
