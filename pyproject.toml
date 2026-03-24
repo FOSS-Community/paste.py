@@ -10,8 +10,8 @@ dependencies = [
     "pygments>=2.17.2",
     "alembic>=1.14.1",
     "pydantic-settings>=2.7.1",
-    "minio>=7.2.15",
     "psycopg2-binary>=2.9.10",
+    "boto3>=1.42.74",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -49,4 +49,7 @@ lint = ["ruff>=0.1.9", "black>=23.12.1"]
 hooks = [
     "pre-commit>=3.6.0",
     "isort>=6.0.0",
+]
+dev = [
+    "boto3-stubs[full]>=1.42.74",
 ]
