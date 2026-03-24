@@ -43,7 +43,7 @@ def post_object_data(
     object_data: str,
     object_name: Optional[str] = None,
     bucket_name: str = get_settings().MINIO_BUCKET_NAME,
-) -> str | None:
+) -> str:
     try:
         if not object_name:
             object_name = str(uuid.uuid4())
@@ -68,7 +68,7 @@ def post_object_data_as_file(
     source_file_path: str,
     object_name: Optional[str] = None,
     bucket_name: str = get_settings().MINIO_BUCKET_NAME,
-) -> str | None:
+) -> str:
     try:
         if not object_name:
             object_name = str(uuid.uuid4())
