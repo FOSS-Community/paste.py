@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from logging.config import dictConfig
 from pathlib import Path
-from typing import Awaitable, List, Optional, Union
+from typing import Awaitable, List, Optional, Union, cast
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,35 +32,37 @@ from .middleware import LimitUploadSize
 from .minio import create_bucket_if_not_exists, delete_object_data, get_object_data, post_object_data
 from .models import Paste
 from .schema import HealthErrorResponse, HealthResponse, PasteCreate, PasteDetails, PasteResponse
-from .utils import _filter_object_name_from_link, extract_uuid
+from .utils import extract_uuid
 
 # --------------------------------------------------------------------
 # Logger
 # --------------------------------------------------------------------
 
-dictConfig(LogConfig())
+dictConfig(LogConfig().model_dump())
 logger = logging.getLogger("paste")
 
 
-# --------------------------------------------------------------------
+# -------------------------------------------------i-------------------
 # Background task to check and delete expired URLs
 # --------------------------------------------------------------------
 
 
 async def delete_expired_urls() -> None:
     while True:
+        db: Optional[Session] = None
         try:
-            db: Session = Session_Local()
+            db = Session_Local()
 
             current_time = datetime.utcnow()
 
             # Find and delete expired URLs
-            expired_urls = db.query(Paste).filter(Paste.expiresat <= current_time).all()
+            expired_urls: List[Paste] = db.query(Paste).filter(Paste.expiresat <= current_time).all()
 
             for url in expired_urls:
-                if url.s3_link:
+                if url.s3_link is not None:
                     try:
-                        object_name = _filter_object_name_from_link(url.s3_link)
+                        # using cast to to tell the type checker to treat it as an str
+                        object_name: str = cast(str, url.s3_link)
                         delete_object_data(object_name)
                     except Exception as s3_err:
                         logger.error(f"Failed to delete S3 object for expired paste {url.pasteID}: {s3_err}")
@@ -72,8 +74,8 @@ async def delete_expired_urls() -> None:
             logger.error(f"Error in deletion task: {e}")
 
         finally:
-            db.close()
-
+            if db is not None:
+                db.close()
         # Check every minute
         await asyncio.sleep(60)
 
@@ -129,13 +131,10 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
 
 
 # Startup event to begin background task
+# TODO: migrate this to lifespan event from on_event
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(delete_expired_urls())
-
-
-@app.on_event("startup")
-async def startup_event():
     create_bucket_if_not_exists()
 
 
@@ -165,7 +164,8 @@ templates: Jinja2Templates = Jinja2Templates(directory=str(Path(BASE_DIR, "templ
 @app.get("/", response_class=HTMLResponse)
 @limiter.limit("100/minute")
 async def indexpage(request: Request) -> Response:
-    logger.debug(f"Received request from {request.client.host}")
+    client_host = request.client.host if request.client is not None else "unknown"
+    logger.debug(f"Received request from {client_host}")
     logger.info(f"Hit at home page - Method: {request.method}")
     return templates.TemplateResponse("index.html", {"request": request})
 
@@ -216,17 +216,26 @@ async def get_paste_data(
     try:
         uuid = extract_uuid(uuid)
 
-        data = db.query(Paste).filter(Paste.pasteID == uuid).first()
+        data: Optional[Paste] = db.query(Paste).filter(Paste.pasteID == uuid).first()
 
         content: Optional[str] = None
         extension: Optional[str] = None
 
-        if not data.s3_link:
-            content = data.content
-            extension = data.extension
+        if data is None:
+            raise HTTPException(detail="Paste not found", status_code=status.HTTP_404_NOT_FOUND)
+
+        if data.s3_link is not None:
+            content = get_object_data(cast(str, data.s3_link))
+            extension = cast(str, data.extension)
         else:
-            content = get_object_data(data.s3_link)
-            extension = data.extension
+            content = cast(str, data.content)
+            extension = cast(str, data.extension)
+
+        if content is None:
+            raise HTTPException(detail="Paste content is unavailable", status_code=status.HTTP_404_NOT_FOUND)
+
+        if extension is None:
+            extension = ""
 
         extension = extension[1::] if extension.startswith(".") else extension
 
@@ -321,7 +330,7 @@ async def post_as_a_file(
                     )
 
         content = await file.read()
-        file_content = content.decode("utf-8")
+        file_content: str = content.decode("utf-8")
 
         if len(content) > 102400:
             s3_link: str = post_object_data(file_content)
@@ -356,10 +365,11 @@ async def delete_paste(uuid: str, db: Session = Depends(get_db)) -> PlainTextRes
     uuid = extract_uuid(uuid)
     try:
         data = db.query(Paste).filter(Paste.pasteID == uuid).first()
-        if data:
-            if data.s3_link:
+        if data is not None:
+            if data.s3_link is not None:
                 try:
-                    object_name = _filter_object_name_from_link(data.s3_link)
+                    # using cast to ensure data.s3_link is a str before passing to delete_object_data
+                    object_name = cast(str, data.s3_link)
                     delete_object_data(object_name)
                 except Exception as s3_err:
                     logger.error(f"Failed to delete S3 object for paste {uuid}: {s3_err}")
@@ -475,8 +485,8 @@ async def get_paste_details(request: Request, uuid: str, db: Session = Depends(g
             return JSONResponse(
                 content=PasteDetails(
                     uuid=uuid,
-                    content=data.content,
-                    extension=data.extension,
+                    content=cast(str, data.content),
+                    extension=cast(str, data.extension),
                 ).model_dump(),
                 status_code=status.HTTP_200_OK,
             )
@@ -535,7 +545,7 @@ async def create_paste(request: Request, paste: PasteCreate, db: Session = Depen
             db.refresh(file)
             _uuid = file.pasteID
             return JSONResponse(
-                content=PasteResponse(uuid=_uuid, url=f"{BASE_URL}/paste/{_uuid}").model_dump(),
+                content=PasteResponse(uuid=cast(str, _uuid), url=f"{BASE_URL}/paste/{_uuid}").model_dump(),
                 status_code=status.HTTP_201_CREATED,
             )
         else:
@@ -549,7 +559,7 @@ async def create_paste(request: Request, paste: PasteCreate, db: Session = Depen
             db.refresh(file)
             _uuid = file.pasteID
             return JSONResponse(
-                content=PasteResponse(uuid=_uuid, url=f"{BASE_URL}/paste/{_uuid}").model_dump(),
+                content=PasteResponse(uuid=cast(str, _uuid), url=f"{BASE_URL}/paste/{_uuid}").model_dump(),
                 status_code=status.HTTP_201_CREATED,
             )
     except HTTPException:
