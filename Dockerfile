@@ -1,7 +1,7 @@
 # Dockerfile
 
 # pull the official docker image
-FROM python:3.11.1-slim AS builder
+FROM python:3.11.3-slim AS builder
 
 # install PDM
 RUN pip install -U pip setuptools wheel
