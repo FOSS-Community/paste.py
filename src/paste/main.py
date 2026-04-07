@@ -21,8 +21,6 @@ from slowapi.util import get_remote_address
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.requests import Request
-from starlette.responses import Response
 
 from . import __author__, __contact__, __url__, __version__
 from .config import get_settings

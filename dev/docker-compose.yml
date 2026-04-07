@@ -39,16 +39,10 @@ services:
       - data2:/data2
       - data3:/data3
       - data4:/data4
-  #    healthcheck:
-  #      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-  #      interval: 30s
-  #      timeout: 10s
-  #      retries: 5
-  #      start_period: 20s
 
   myapp:
     build:
-      context: .
+      context: ../
       dockerfile: Dockerfile
     environment:
       MINIO_CLIENT_LINK: http://rustfs:9000
@@ -59,11 +53,12 @@ services:
       SQLALCHEMY_DATABASE_URL: postgresql://postgres:mytestpassword@postgres:5432/pastedb
     ports:
       - "8082:8080"
-    entrypoint: ["./docker-entrypoint.sh"]
+    entrypoint: ["/project/docker-entrypoint.sh"]
     command: ["pdm", "run", "dev"]
     depends_on:
       postgres:
         condition: service_healthy
+
 volumes:
   postgres_data:
   data1:

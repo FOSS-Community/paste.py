@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 
-# Run migrations
+echo "Running database migrations..."
 pdm run migrate
 
-# Execute the main command
+echo "Starting application..."
 exec "$@"
