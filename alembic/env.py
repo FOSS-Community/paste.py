@@ -3,28 +3,29 @@ import os
 import sys
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
-# Add the src directory to Python path
+# Add the src directory to Python path explicitly before importing app modules
 current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 src_dir = os.path.join(current_dir, "src")
-sys.path.append(src_dir)
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
 
-# Import your models and Base
-from paste.database import Base
+# Import your models and Base after path setup
+from paste.config import get_settings  # noqa: E402
+from paste.database import Base  # noqa: E402
 
-# Import all your models here
+# Import all your models here so Base.metadata is populated
+from paste.models import Paste  # noqa: F401, E402
+
 # this is the Alembic Config object
 config = context.config
 
 # Interpret the config file for Python logging.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-
-from paste.config import get_settings
 
 config.set_main_option("sqlalchemy.url", get_settings().SQLALCHEMY_DATABASE_URL)
 
