@@ -3,7 +3,7 @@ import random
 import re
 import string
 from pathlib import Path
-from typing import Pattern
+from re import Pattern
 
 
 def generate_uuid() -> str:
@@ -36,7 +36,7 @@ def _find_without_extension(file_name: str) -> str:
     pattern_without_dot: Pattern[str] = re.compile(r"^" + file_name + "$")
     math_pattern: list = [x for x in file_list if pattern_with_dot.match(x) or pattern_without_dot.match(x)]
     if len(math_pattern) == 0:
-        return str()
+        return ""
     else:
         return math_pattern[0]
 
