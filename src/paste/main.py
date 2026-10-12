@@ -2,10 +2,11 @@ import asyncio
 import json
 import logging
 import time
+from collections.abc import Awaitable
 from datetime import datetime, timedelta, timezone
 from logging.config import dictConfig
 from pathlib import Path
-from typing import Awaitable, List, Optional, Union, cast
+from typing import cast
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,14 +48,14 @@ logger = logging.getLogger("paste")
 
 async def delete_expired_urls() -> None:
     while True:
-        db: Optional[Session] = None
+        db: Session | None = None
         try:
             db = Session_Local()
 
             current_time = datetime.utcnow()
 
             # Find and delete expired URLs
-            expired_urls: List[Paste] = db.query(Paste).filter(Paste.expiresat <= current_time).all()
+            expired_urls: list[Paste] = db.query(Paste).filter(Paste.expiresat <= current_time).all()
 
             for url in expired_urls:
                 if url.s3_link is not None:
@@ -96,7 +97,7 @@ app: FastAPI = FastAPI(
 app.state.limiter = limiter
 
 
-def rate_limit_exceeded_handler(request: Request, exc: Exception) -> Union[Response, Awaitable[Response]]:
+def rate_limit_exceeded_handler(request: Request, exc: Exception) -> Response | Awaitable[Response]:
     if isinstance(exc, RateLimitExceeded):
         return Response(content="Rate limit exceeded", status_code=429)
     return Response(content="An error occurred", status_code=500)
@@ -136,7 +137,7 @@ async def startup_event():
     create_bucket_if_not_exists()
 
 
-origins: List[str] = ["*"]
+origins: list[str] = ["*"]
 
 BASE_URL: str = get_settings().BASE_URL
 app.add_middleware(
@@ -208,16 +209,16 @@ async def health(db: Session = Depends(get_db)) -> HealthResponse:
 async def get_paste_data(
     request: Request,
     uuid: str,
-    user_agent: Optional[str] = Header(None),
+    user_agent: str | None = Header(None),
     db: Session = Depends(get_db),
 ) -> Response:
     try:
         uuid = extract_uuid(uuid)
 
-        data: Optional[Paste] = db.query(Paste).filter(Paste.pasteID == uuid).first()
+        data: Paste | None = db.query(Paste).filter(Paste.pasteID == uuid).first()
 
-        content: Optional[str] = None
-        extension: Optional[str] = None
+        content: str | None = None
+        extension: str | None = None
 
         if data is None:
             raise HTTPException(detail="Paste not found", status_code=status.HTTP_404_NOT_FOUND)
@@ -235,7 +236,7 @@ async def get_paste_data(
         if extension is None:
             extension = ""
 
-        extension = extension[1::] if extension.startswith(".") else extension
+        extension = extension.removeprefix(".")
 
         is_browser_request = "Mozilla" in user_agent if user_agent else False
 
@@ -288,11 +289,11 @@ async def get_paste_data(
 async def post_as_a_file(
     request: Request,
     file: UploadFile = File(...),
-    expiration: Optional[str] = Query(None, description="Expiration time: '1h', '1d', '1w', '1m', or ISO datetime"),
+    expiration: str | None = Query(None, description="Expiration time: '1h', '1d', '1w', '1m', or ISO datetime"),
     db: Session = Depends(get_db),
 ) -> PlainTextResponse:
     try:
-        file_extension: Optional[str] = None
+        file_extension: str | None = None
         # Extract file extension from the filename
         try:
             if file.filename is not None:
@@ -409,9 +410,9 @@ async def web(request: Request) -> Response:
 async def web_post(
     request: Request,
     content: str = Form(...),
-    extension: Optional[str] = Form(None),
-    expiration: Optional[str] = Form(None),
-    custom_expiry: Optional[str] = Form(None),
+    extension: str | None = Form(None),
+    expiration: str | None = Form(None),
+    custom_expiry: str | None = Form(None),
     db: Session = Depends(get_db),
 ) -> RedirectResponse:
     try:
@@ -461,7 +462,7 @@ async def web_post(
     except Exception as e:
         db.rollback()
         raise HTTPException(
-            detail=f"There was an error creating the paste: {str(e)}",
+            detail=f"There was an error creating the paste: {e!s}",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
     finally:

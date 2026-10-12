@@ -1,6 +1,5 @@
 import io
 import uuid
-from typing import Optional
 
 import boto3
 from botocore.client import Config
@@ -41,7 +40,7 @@ def get_object_data(object_name: str, bucket_name: str = get_settings().MINIO_BU
 
 def post_object_data(
     object_data: str,
-    object_name: Optional[str] = None,
+    object_name: str | None = None,
     bucket_name: str = get_settings().MINIO_BUCKET_NAME,
 ) -> str:
     try:
@@ -66,7 +65,7 @@ def post_object_data(
 
 def post_object_data_as_file(
     source_file_path: str,
-    object_name: Optional[str] = None,
+    object_name: str | None = None,
     bucket_name: str = get_settings().MINIO_BUCKET_NAME,
 ) -> str:
     try:
