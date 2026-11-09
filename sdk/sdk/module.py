@@ -1,13 +1,13 @@
-import requests
-from typing import Union
 from pathlib import Path
+
+import requests
 
 
 class PasteBinSDK:
     def __init__(self, base_url: str = "https://paste.fosscu.org"):
         self.base_url = base_url
 
-    def create_paste(self, content: Union[str, Path], file_extension: str) -> str:
+    def create_paste(self, content: str | Path, file_extension: str) -> str:
         """
         Create a new paste.
         :param content: The content to paste, either as a string or a Path to a file
@@ -25,7 +25,7 @@ class PasteBinSDK:
             result = response.json()
             return result["uuid"]
         except requests.RequestException as e:
-            raise RuntimeError(f"Error creating paste: {str(e)}")
+            raise RuntimeError(f"Error creating paste: {e!s}")
 
     def get_paste(self, uuid: str) -> dict:
         """
@@ -38,7 +38,7 @@ class PasteBinSDK:
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
-            raise RuntimeError(f"Error retrieving paste: {str(e)}")
+            raise RuntimeError(f"Error retrieving paste: {e!s}")
 
     def delete_paste(self, uuid: str) -> str:
         """
@@ -51,7 +51,7 @@ class PasteBinSDK:
             response.raise_for_status()
             return response.text
         except requests.RequestException as e:
-            raise RuntimeError(f"Error deleting paste: {str(e)}")
+            raise RuntimeError(f"Error deleting paste: {e!s}")
 
     def get_languages(self) -> dict:
         """
@@ -63,4 +63,4 @@ class PasteBinSDK:
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
-            raise RuntimeError(f"Error fetching languages: {str(e)}")
+            raise RuntimeError(f"Error fetching languages: {e!s}")
