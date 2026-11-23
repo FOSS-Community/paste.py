@@ -14,11 +14,11 @@ if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
 # Import your models and Base after path setup
-from paste.config import get_settings  # noqa: E402
-from paste.database import Base  # noqa: E402
+from paste.config import get_settings
+from paste.database import Base
 
 # Import all your models here so Base.metadata is populated
-from paste.models import Paste  # noqa: F401, E402
+from paste.models import Paste  # noqa: F401
 
 # this is the Alembic Config object
 config = context.config
