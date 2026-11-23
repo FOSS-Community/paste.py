@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-from typing import Literal, Optional, Union
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -11,8 +11,8 @@ class Data(BaseModel):
 
 class PasteCreate(BaseModel):
     content: str
-    extension: Optional[str] = None
-    expiration: Optional[Union[Literal["1h", "1d", "1w", "1m"], datetime]] = None
+    extension: str | None = None
+    expiration: Literal["1h", "1d", "1w", "1m"] | datetime | None = None
 
 
 class PasteResponse(BaseModel):
@@ -23,7 +23,7 @@ class PasteResponse(BaseModel):
 class PasteDetails(BaseModel):
     uuid: str
     content: str
-    extension: Optional[str] = None
+    extension: str | None = None
 
 
 class HealthResponse(BaseModel):
